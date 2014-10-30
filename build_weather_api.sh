@@ -8,7 +8,7 @@ else
   echo "=========================\n"
 fi
 
-sudo node WeathercloudServer.js
+sudo node WeatherserverAuth.js
 if [ $? != 0 ];then
   echo "Stop run weather server...."
 fi
