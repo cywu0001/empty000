@@ -103,10 +103,12 @@ var updateInformation = function(initialize){
 }
 updateInformation(true);
 
-//For test
+/*
+ * ==================================================
+ *              For Test
+ * ==================================================
+ */
 //weatherInfo.get(10001, function(err) {
-//		BlackCloudLogger.Log(logger, "info", err);
+//	BlackCloudLogger.Log(logger, "info", err);
 //});
-
-
 

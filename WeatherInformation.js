@@ -3,6 +3,7 @@ var request = require("request");
 var fs = require("fs");
 var waterfall = require("async-waterfall");
 var couchbase = require("./couchbase");
+var weatherCodeMap = require("./WeatherCodeMapping");
 var BlackCloudLogger = require("./BlackCloudLogger");
 var logger = BlackCloudLogger.New("WeatherInformation");
 
@@ -257,8 +258,10 @@ exports.getBackup = function(zipCode, result) {
 							{
 								precipMM: weatherInfo["current_observation"]["precip_1hr_metric"],
 								temp_C: weatherInfo["current_observation"]["temp_c"],
-								weatherCode: weatherInfo["current_observation"]["weather"],  //Need to mapping
-								weatherDesc: weatherInfo["current_observation"]["weather"]   //Need to mapping
+								weatherCode: weatherCodeMap.getWeatherCode(
+												weatherInfo["current_observation"]["icon"]),
+								weatherDesc: weatherCodeMap.getWeatherDesc(
+												weatherInfo["current_observation"]["icon"])
 							}
 						]
 					}
@@ -291,6 +294,7 @@ exports.getBackup = function(zipCode, result) {
 						BlackCloudLogger.Log(logger, "info", "Too much forecast information");
 						return;
 					}
+
 					var obj = {
 						date: val["date"]["year"] + "-" + val["date"]["month"] + "-" + val["date"]["day"],
 						precipMM: val["qpf_allday"]["mm"],
@@ -298,8 +302,8 @@ exports.getBackup = function(zipCode, result) {
 						tempMaxF: val["high"]["fahrenheit"],
 						tempMinC: val["low"]["celsius"],
 						tempMinF: val["low"]["fahrenheit"],
-						weatherCode: val["conditions"], //Need to mapping
-						weatherDesc: val["conditions"], //Need to mapping
+						weatherCode: weatherCodeMap.getWeatherCode(val["icon"]),
+						weatherDesc: weatherCodeMap.getWeatherDesc(val["icon"]),
 						winddir16Point: val["avewind"]["dir"],
 						winddirDegree: val["avewind"]["degrees"],
 						winddirection: val["avewind"]["dir"],
@@ -315,7 +319,7 @@ exports.getBackup = function(zipCode, result) {
 						weather: forecastArray
 					}
 				};
-
+			
 				var forecastJson = JSON.parse(JSON.stringify(forecastObj));
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
