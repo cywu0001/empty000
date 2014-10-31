@@ -15,6 +15,7 @@
     "http": "*",
     "aws-sdk": "*",
     "async-waterfall": "*",
-    "request": "*"
+    "request": "*",
+    "hashmap": "*"
   }
 }
