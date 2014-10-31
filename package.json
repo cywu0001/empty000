@@ -13,6 +13,8 @@
     "baseview": "*",
     "time": "*",
     "http": "*",
-    "aws-sdk": "*"
+    "aws-sdk": "*",
+    "async-waterfall": "*",
+    "request": "*"
   }
 }
