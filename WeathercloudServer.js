@@ -18,7 +18,7 @@ var logger = blackloudlogger.new();
 
 var currentweather = "_current";
 var forecastweather = "_forecast";
-//var couchbase = require("./couchbase");
+var couchbase = require("./Couchbase");
 var zipcode;
 var querycode;
 var webresponse;

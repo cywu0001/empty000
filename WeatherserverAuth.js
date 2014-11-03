@@ -20,10 +20,20 @@ var logger = blackloudlogger.new();
 
 var currentweather = "_current";
 var forecastweather = "_forecast";
-var couchbase = require("./couchbase");
+var couchbase = require("./Couchbase");
 var zipcode;
 var querycode;
 var webresponse;
+
+var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
+var paramnotfound = {"status":{"code":1401,"message":"Parameter not found"}};
+var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
+var authfail = {"status":{"code":1403,"message":"Authentication failure"}};
+var zipnnotfound = {"status":{"code":1404,"message":"Zip code not found"}};
+var dbqueryerr = {"status":{"code":1405,"message":"Database query error"}};
+var dbdisconnect = {"status":{"code":1406,"message":"Database disconnection"}};
+var weatherqueryerr = {"status":{"code":1407,"message":"Weather server query error"}};
+var weatherdisconnect = {"status":{"code":1408,"message":"Weather information server disconnection"}};
 
 //Weather information query call back.
 var Inforesult = function (err) {
@@ -47,12 +57,10 @@ var DBreslut = function (err, data) {
     }
     if(data) {
         console.log("success\n");
-        blackloudlogger.log(logger, 'info', 'success');
-
-        var resp = {};
-        resp['code'] = 200;
-        resp['response'] = JSON.stringify(data); 
-        webresponse.status(200).send(resp);
+        blackloudlogger.log(logger, 'info', 'success');        
+        webresponse.statusCode = 200;
+        //webresponse.end(JSON.stringify(data));
+        webresponse.end(data);
         blackloudlogger.updateS3();
 
     }
@@ -68,7 +76,21 @@ var register = function(app){
   app.use(bodyparser.urlencoded({ extended: false }));
   app.use(function(req, res, next){
     console.log('%s %s', req.method, req.url);
-    next();
+    if (req.url == "/") {
+        //Missing parameter:1400.
+        blackloudlogger.log(logger, 'info', 'Missing parameter');
+        res.statusCode = 400;
+        res.end(JSON.stringify(parammiss));
+    }
+    else if (req.url.match("/v1/currentweather")==null && req.url.match("/v1/forecastweather")==null) {
+        //Parameter not found:1401.
+        blackloudlogger.log(logger, 'info', 'Parameter not found');
+        res.statusCode = 400;
+        res.end(JSON.stringify(paramnotfound));
+    }
+    else {
+        next();
+    }
   });
 
   function client_authentication (req, res, next) {
@@ -76,12 +98,15 @@ var register = function(app){
         console.log ("authentication pass");
         next();
     } else {
-        res.statusCode = 401
-        res.end('Unauthorized');
+        // Authentification fail:1403.
+        console.log ("Authentification fail");
+        blackloudlogger.log(logger, 'info', 'Authentification fail');
+        res.statusCode = 400;
+        res.end(JSON.stringify(authfail));
     }
   }
 
-  app.get('/v1/:param', function(req, res){
+  app.get('/v1/:param', client_authentication, function(req, res) {
       var resp = {};
       var paramexit = false;
       var weathertype = req.params['param'];
@@ -103,11 +128,11 @@ var register = function(app){
           }
 
           if (paramexit == false) {
-              console.log('weather parameter missing' );
-              blackloudlogger.log(logger, 'info', 'weather parameter missing');
-              resp['code'] = 400;
-              resp['response'] = 'weather parameter missing';
-              res.status(200).send(resp);
+              // Zip code not found:1404.
+              blackloudlogger.log(logger, 'info', 'weather zipcode not found');
+              res.statusCode = 400;
+              res.end(JSON.stringify(zipnnotfound));
+              return 0;
           }
           
           if (querycode) {

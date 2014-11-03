@@ -1,6 +1,6 @@
 var time = require("time");
 var waterfall = require("async-waterfall");
-var couchbase = require("./couchbase");
+var couchbase = require("./Couchbase");
 var weatherInfo = require("./WeatherInformation");
 var BlackCloudLogger = require("./BlackCloudLogger");
 var logger = BlackCloudLogger.New("WeatherUpdateService");
