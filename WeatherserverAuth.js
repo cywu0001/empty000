@@ -104,6 +104,18 @@ var register = function(app){
         res.statusCode = 400;
         res.end(JSON.stringify(paramnotfound));
     }
+    else if (req.url == "/v1/currentweather" || req.url == "/v1/forecastweather") {
+        //Parameter format error:1400.
+        blackloudlogger.log(logger, 'info', 'Missing parameter');
+        res.statusCode = 400;
+        res.end(JSON.stringify(parammiss));
+    }
+    else if (req.url.match("zipcode")==null) {
+        //Parameter not found:1401.
+        blackloudlogger.log(logger, 'info', 'Parameter not found');
+        res.statusCode = 400;
+        res.end(JSON.stringify(paramnotfound));
+    }
     else if (req.url.match("/v1/currentweather")==null && req.url.match("/v1/forecastweather")==null) {
         //Parameter format error:1402.
         blackloudlogger.log(logger, 'info', 'Parameter format error');
