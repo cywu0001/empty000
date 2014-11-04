@@ -9,8 +9,8 @@ var success = 0;
 var response_data = {
 	"status" :
 	{
-	"code": 200,
-	"message": "completed"
+	"code": 1200,
+	"message": "Command succeeded"
 	},
 };
 
