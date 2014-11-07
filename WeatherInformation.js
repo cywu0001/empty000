@@ -14,15 +14,20 @@ var format = "json";
 var days = "3";
 var apiKey = "19eb3c74221695b82ca12d3f90b4c4f116742277";
 var retryTimes = 1;
+var zipCodeLength = 5;
 
 //Backup server settings
 var weatherServerBackup = "api.wunderground.com";
 var apiKeyBackup = "b8c3a8184aca6862";
 var formatBackup = "json";
 
-//Error response from weather provider
+//Error response from worldweatheronline
 var apiKeyErrorWWO = "is not a valid key";
 var zipCodeErrorWWO = "Unable to find any matching weather location";
+var exceededPerSecErrorWWO = "Queries per second exceeded";
+var exceededPerDayErrorWWO = "Queries per day exceeded";
+
+//Error response from wunderground
 var apiKeyErrorWUG = "this key does not exist";
 var zipCodeErrorWUG = "No cities match your search query";
 
@@ -33,6 +38,8 @@ var zipCodeError = "invalid zip code";
 var databaseError = "database error";
 var parseError = "parse error";
 var serverError = "server error";
+var exceededPerSecError = "exceeded per sec error";
+var exceededPerDayError = "exceeded per day error";
 
 /*
  * ================================================================
@@ -43,7 +50,12 @@ var serverError = "server error";
 function weatherReq(zipCode, retry, callback) {
 	var url = "http://" + weatherServer + serverPath + "q=" + zipCode + "&format=" + format 
 			   + "&num_of_days=" + days + "&key=" + apiKey;
-          
+
+   	if(zipCode.length != zipCodeLength) {
+		callback(zipCodeError, "done");
+		return;
+	}
+     
 	request(url, function(error, response, body) {
 		BlackCloudLogger.log(logger, "info", "request: " + url);
 		BlackCloudLogger.log(logger, "info", "body: " + body);
@@ -71,6 +83,12 @@ function weatherReq(zipCode, retry, callback) {
 			BlackCloudLogger.log(logger, "error", "request error: " + url);
 			if(body.search(apiKeyErrorWWO) > 0) {
 				callback(apiKeyError, "done");
+			}
+			else if(body.search(exceededPerSecErrorWWO) >= 0){
+				weatherReq(zipCode, retry, callback);
+			}
+			else if(body.search(exceededPerDayErrorWWO) >= 0){
+				callback(exceededPerDayError, "done");
 			}
 			//Try again after 1 second
 			else if(retry >= 1) {
@@ -214,7 +232,7 @@ function weatherBackupReq(zipCode, feature, callback) {
 	request(url, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			BlackCloudLogger.log(logger, "info", "request: " + url);
-			//BlackCloudLogger.Log(logger, "info", "body: " + body);
+			//BlackCloudLogger.log(logger, "info", "body: " + body);
 			var weatherInfo = JSON.parse(body);
 
 			//Get Error MSG

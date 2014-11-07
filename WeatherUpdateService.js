@@ -1,9 +1,10 @@
 var time = require("time");
 var waterfall = require("async-waterfall");
+var limiter = require("simple-rate-limiter");
 var couchbase = require("./Couchbase");
 var weatherInfo = require("./WeatherInformation");
-var BlackCloudLogger = require("./BlackCloudLogger");
-var logger = BlackCloudLogger.New("WeatherUpdateService");
+var BlackCloudLogger = require("./BlackloudLogger");
+var logger = BlackCloudLogger.new("WeatherUpdateService");
 
 /*
  * ==================================================
@@ -11,7 +12,8 @@ var logger = BlackCloudLogger.New("WeatherUpdateService");
  * ==================================================
  */
 //Set by user
-var timing = 2;  //0 ~ 11     
+var timing = 2;  //0 ~ 11
+var updateInterval = 12 * 60 * 60 * 1000; //every 12 hours
  
 //Now time in west 
 var current = new time.Date();
@@ -21,8 +23,8 @@ var currentTime = Math.floor(new time.Date()/1000);
 var midnight = new time.Date(current.getFullYear(), current.getMonth(), current.getDate());
 var midnightTime = Math.floor(midnight/1000);
 
-BlackCloudLogger.Log(logger, "info", "current time: " + current + " " + currentTime);
-BlackCloudLogger.Log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
+BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
+BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
 
 //ex.2:00 ___ 14:00 ___ 2:00
 var first = midnightTime + (timing * 60 * 60);
@@ -41,7 +43,7 @@ else if(third > currentTime) {
 	offset = third - currentTime;
 }
 
-BlackCloudLogger.Log(logger, "info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) 
+BlackCloudLogger.log(logger, "info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) 
 				+ "mins " + Math.floor(offset%60) + "secs ");
 
 /*
@@ -49,19 +51,17 @@ BlackCloudLogger.Log(logger, "info", "after " + Math.floor(offset/3600) + "hours
  *              Main weather service
  * ==================================================
  */
-var zipCodeMap = [];
-var reqInterval = 250; //ms
-var updateInterval = 12 * 60 * 60 * 1000; //every 12 hours
+var zipMap = [];
 
-var update = function(){
-	weatherInfo.get(zipCodeMap.shift(), function(err) {
-		BlackCloudLogger.Log(logger, "info", err);
-	});
+var updateByMap = function(){
+	var updateLimiter = limiter(weatherInfo.get).to(4).per(1000);	
 
-	if(zipCodeMap.length > 0) {
-		setTimeout(update, reqInterval);			
-	}
-} 
+	while(zipMap.length > 0) {
+		updateLimiter(zipMap.shift(), function(err) {
+			console.log(err);
+		});
+	}				
+};
 
 var updateInformation = function(initialize){
 	waterfall([
@@ -70,7 +70,7 @@ var updateInformation = function(initialize){
 			couchbase.getZIP(function (error, data) {
 				if(data != null) {
 					data["rows"].forEach(function (val, idx) {
-						zipCodeMap.push(val["id"]);
+						zipMap.push(val["id"]);
 					});
 					callback(null);
 				}
@@ -79,17 +79,12 @@ var updateInformation = function(initialize){
 				}
 			});
 		},
-		//Second, update weather information and need to schedule
-		//the request cause server limitation.(5 requests/sec)
-		function(callback){
-			setTimeout(update, reqInterval);
-			callback(null);
-		},
-		//Third, if first time to start then schedule next update timing
+		//Second, if first time to start then schedule next update timing
 		function(callback){
 			if(initialize) {
+				updateByMap();
 				setTimeout(function(){
-					updateInformation(false);
+					updateByMap();
 					setInterval(function(){
 						updateInformation(false);
 					}, updateInterval);
@@ -98,7 +93,7 @@ var updateInformation = function(initialize){
 			callback(null, "done");
 		}
 	], function (err, res) {
-		BlackCloudLogger.Log(logger, "info", "weather information task is done");
+		BlackCloudLogger.log(logger, "info", "weather information task is done");
 	});
 }
 updateInformation(true);
@@ -108,7 +103,7 @@ updateInformation(true);
  *              For Test
  * ==================================================
  */
-//weatherInfo.get(10001, function(err) {
-//	BlackCloudLogger.Log(logger, "info", err);
+//weatherInfo.get(22222, function(err) {
+//	BlackCloudLogger.log(logger, "info", err);
 //});
 

@@ -20,6 +20,7 @@
     "aws-sdk": "*",
     "async-waterfall": "*",
     "request": "*",
-    "hashmap": "*"
+    "hashmap": "*",
+	"simple-rate-limiter": "*"
   }
 }
