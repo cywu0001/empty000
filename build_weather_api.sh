@@ -9,6 +9,7 @@ else
 fi
 sudo pm2 start BlackloudLogAutoUpdate.js -i 1
 sudo pm2 start WeatherserverAuth.js -i 1
+sudo pm2 start WeatherUpdateService.js -i 1
 if [ $? != 0 ];then
   echo "Stop run weather server...."
 fi
