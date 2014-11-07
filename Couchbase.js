@@ -25,11 +25,12 @@ exports.insertData = function insertData(key,w_data ,result) {
     	myBucket.replace(key, JSON.stringify(w_data), function(err,data){
 			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 				console.log("Failed to replace data\n");
+				result(err, null);
 			}else
 			{
 				console.log("Replace data success\n");
-			}
-			result(err, null);
+				result(success, null);
+			}			
 		    myBucket.disconnect();
 
 		});
