@@ -81,8 +81,8 @@ var updateInformation = function(initialize){
 		},
 		//Second, if first time to start then schedule next update timing
 		function(callback){
+			updateByMap();
 			if(initialize) {
-				updateByMap();
 				setTimeout(function(){
 					updateByMap();
 					setInterval(function(){
