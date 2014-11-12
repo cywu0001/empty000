@@ -52,7 +52,7 @@ function weatherReq(zipCode, retry, callback) {
 			   + "&num_of_days=" + days + "&key=" + apiKey;
 
    	if(zipCode.length != zipCodeLength) {
-		callback(zipCodeError, "done");
+		callback(zipCodeError + " " + zipCode + " is not five digital", "done");
 		return;
 	}
      
@@ -69,7 +69,7 @@ function weatherReq(zipCode, retry, callback) {
 					callback(apiKeyError, "done");
 				}
 				else if(body.search(zipCodeErrorWWO) > 0) {
-					callback(zipCodeError, "done");
+					callback(zipCodeError + " " + zipCode, "done");
 				}
 				else {
 					callback(weatherInfo["data"]["error"][0]["msg"], "done");
@@ -85,6 +85,7 @@ function weatherReq(zipCode, retry, callback) {
 				callback(apiKeyError, "done");
 			}
 			else if(body.search(exceededPerSecErrorWWO) >= 0){
+				BlackCloudLogger.log(logger, "info", exceededPerSecErrorWWO);
 				weatherReq(zipCode, retry, callback);
 			}
 			else if(body.search(exceededPerDayErrorWWO) >= 0){
@@ -105,6 +106,9 @@ function weatherReq(zipCode, retry, callback) {
 }
 
 exports.get = function(zipCode, result) {
+	var currentObj;
+	var forecastObj;
+	
 	waterfall([
 		//First, get weather information form provider
 		function(callback){
@@ -113,14 +117,14 @@ exports.get = function(zipCode, result) {
 		//Second, parse current information and insert to database
 		function(weatherInfo, callback){
 			try {
-				var currentObj = {
+				currentObj = {
 					data: {
 						current_condition: [
 							{
 								precipMM: weatherInfo["data"]["current_condition"][0]["precipMM"],
 								temp_C: weatherInfo["data"]["current_condition"][0]["temp_C"],
 								weatherCode: weatherInfo["data"]["current_condition"][0]["weatherCode"],
-								weatherDesc: weatherInfo["data"]["current_condition"][0]["weatherDesc"]
+								weatherDesc: weatherInfo["data"]["current_condition"][0]["weatherDesc"][0]["value"]
 							}
 						]
 					}
@@ -153,18 +157,18 @@ exports.get = function(zipCode, result) {
 						tempMinC: val["tempMinC"],
 						tempMinF: val["tempMinF"],
 						weatherCode: val["weatherCode"],
-						weatherDesc: val["weatherDesc"],
+						weatherDesc: val["weatherDesc"][0]["value"],
 						winddir16Point: val["winddir16Point"],
 						winddirDegree: val["winddirDegree"],
 						winddirection: val["winddirection"],
 						windspeedKmph: val["windspeedKmph"],
 						windspeedMiles: val["windspeedMiles"],
-						watering: (val["precipMM"] > 0) ? "1":"0"
+						suggestWatering: (val["precipMM"] > 0) ? "1":"0"
 					}
 					forecastArray.push(obj);
 				});
 				
-				var forecastObj = {
+				forecastObj = {
 					data: {
 						weather: forecastArray
 					}
@@ -174,7 +178,7 @@ exports.get = function(zipCode, result) {
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
 						BlackCloudLogger.log(logger, "info", "Insert forecast JSON completed");
-						callback(null, weatherInfo, forecastArray);
+						callback(null);
 					}
 					else {
 						callback(databaseError, "done");
@@ -185,12 +189,12 @@ exports.get = function(zipCode, result) {
 			}
 		},
 		//Forth, combine forecast and current and insert to database
-		function(weatherInfo, forecastInfo, callback){
+		function(callback){
 			try {
 				var totalObj = {
 					data: {
-						current_condition: weatherInfo["data"]["current_condition"][0],
-						weather: forecastInfo
+						current_condition: currentObj["data"]["current_condition"],
+						weather: forecastObj["data"]["weather"]
 					}   
 				};
 
@@ -241,7 +245,7 @@ function weatherBackupReq(zipCode, feature, callback) {
 					callback(apiKeyError, "done");
 				}
 				else if(body.search(zipCodeErrorWUG) > 0) {
-					callback(zipCodeError, "done");
+					callback(zipCodeError + " " + zipCode, "done");
 				}
 				else {
 					callback(weatherInfo["response"]["error"], "done");
@@ -327,7 +331,7 @@ exports.getBackup = function(zipCode, result) {
 						winddirection: val["avewind"]["dir"],
 						windspeedKmph: val["avewind"]["kph"],
 						windspeedMiles: val["avewind"]["mkh"],
-						watering: (val["qpf_allday"]["mm"] > 0) ? "1":"0"
+						suggestWatering: (val["qpf_allday"]["mm"] > 0) ? "1":"0"
 					}
 					forecastArray.push(obj);
 				});

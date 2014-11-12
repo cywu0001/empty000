@@ -14,7 +14,7 @@ var logger = BlackCloudLogger.new("WeatherUpdateService");
 //Set by user
 var timing = 2;  //0 ~ 11
 var updateInterval = 12 * 60 * 60 * 1000; //every 12 hours
- 
+
 //Now time in west 
 var current = new time.Date();
 var currentTime = Math.floor(new time.Date()/1000);
@@ -98,12 +98,4 @@ var updateInformation = function(initialize){
 }
 updateInformation(true);
 
-/*
- * ==================================================
- *              For Test
- * ==================================================
- */
-//weatherInfo.get(22222, function(err) {
-//	BlackCloudLogger.log(logger, "info", err);
-//});
 
