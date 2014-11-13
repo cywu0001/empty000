@@ -36,6 +36,10 @@ var dbdisconn = {"status":{"code":1406,"message":"Database disconnection"}};
 var weaservqueryerr = {"status":{"code":1407,"message":"Weather server query error"}};
 var weaservdisconn = {"status":{"code":1408,"message":"Weather information server disconnection"}};
 
+function isPositiveInteger(n) {
+    return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
+}
+
 
 //Weather information query call back.
 var Inforesult = function (err) {
@@ -60,6 +64,11 @@ var Inforesult = function (err) {
         blackloudlogger.log(logger, 'info', 'Inforesult err='+err);
         webresponse.statusCode = 500;
         webresponse.end(JSON.stringify(dbqueryerr));
+    }
+    else if (err.match("invalid zip code") != null) {
+        blackloudlogger.log(logger, 'info', 'Inforesult err='+err);
+        webresponse.statusCode = 400;
+        webresponse.end(JSON.stringify(zipnotfound));
     }
 };
 
@@ -162,10 +171,17 @@ var register = function(app){
           }
 
           if (paramexit == false) {
-              // Zip code not found:1404.
-              blackloudlogger.log(logger, 'info', 'weather zipcode not found');
+              // Parameter format error:1402
+              blackloudlogger.log(logger, 'info', 'weather zipcode parameter format error');
               res.statusCode = 400;
-              res.end(JSON.stringify(zipnotfound));
+              res.end(JSON.stringify(paramformaterr));
+              return 0;
+          }
+
+          if (!isPositiveInteger(zipcode)) {
+              blackloudlogger.log(logger, 'info', 'weather zipcode parameter format error');
+              res.statusCode = 400;
+              res.end(JSON.stringify(paramformaterr));
               return 0;
           }
           
