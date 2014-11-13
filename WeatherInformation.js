@@ -3,23 +3,13 @@ var request = require("request");
 var fs = require("fs");
 var waterfall = require("async-waterfall");
 var couchbase = require("./Couchbase");
+var dotEnv = require('dotenv');
 var weatherCodeMap = require("./WeatherCodeMapping");
 var BlackCloudLogger = require("./BlackloudLogger");
 var logger = BlackCloudLogger.new("WeatherInformation");
 
-//Server settings
-var weatherServer = "api.worldweatheronline.com";
-var serverPath = "/free/v1/weather.ashx?";
-var format = "json";
-var days = "3";
-var apiKey = "19eb3c74221695b82ca12d3f90b4c4f116742277";
-var retryTimes = 1;
-var zipCodeLength = 5;
-
-//Backup server settings
-var weatherServerBackup = "api.wunderground.com";
-var apiKeyBackup = "b8c3a8184aca6862";
-var formatBackup = "json";
+dotEnv.load();
+var logEnable = true;
 
 //Error response from worldweatheronline
 var apiKeyErrorWWO = "is not a valid key";
@@ -48,17 +38,20 @@ var exceededPerDayError = "exceeded per day error";
  */
 
 function weatherReq(zipCode, retry, callback) {
-	var url = "http://" + weatherServer + serverPath + "q=" + zipCode + "&format=" + format 
-			   + "&num_of_days=" + days + "&key=" + apiKey;
+	var url = "http://" + process.env.WEATHER_SERVER + process.env.SERVER_VER + 
+    	"/weather.ashx?q=" + zipCode + "&format=" + process.env.INFO_FORMAT + 
+        "&num_of_days=" + process.env.FORECAST_DAYS + "&key=" + process.env.WEATHER_APIKEY;
 
-   	if(zipCode.length != zipCodeLength) {
+   	if(zipCode.length != process.env.ZIPCODE_LENGTH) {
 		callback(zipCodeError + " " + zipCode + " is not five digital", "done");
 		return;
 	}
      
 	request(url, function(error, response, body) {
-		BlackCloudLogger.log(logger, "info", "request: " + url);
-		BlackCloudLogger.log(logger, "info", "body: " + body);
+		if(logEnable) {
+			BlackCloudLogger.log(logger, "info", "request: " + url);
+			BlackCloudLogger.log(logger, "info", "body: " + body);
+		}
 
 		if (!error && response.statusCode == 200) {
 			var weatherInfo = JSON.parse(body);
@@ -80,12 +73,12 @@ function weatherReq(zipCode, retry, callback) {
 			}
 		}
 		else {
-			BlackCloudLogger.log(logger, "error", "request error: " + url);
 			if(body.search(apiKeyErrorWWO) > 0) {
 				callback(apiKeyError, "done");
 			}
 			else if(body.search(exceededPerSecErrorWWO) >= 0){
-				BlackCloudLogger.log(logger, "info", exceededPerSecErrorWWO);
+				if(logEnable)
+					BlackCloudLogger.log(logger, "info", exceededPerSecErrorWWO);
 				weatherReq(zipCode, retry, callback);
 			}
 			else if(body.search(exceededPerDayErrorWWO) >= 0){
@@ -93,13 +86,16 @@ function weatherReq(zipCode, retry, callback) {
 			}
 			//Try again after 1 second
 			else if(retry >= 1) {
+				if(logEnable)
+					BlackCloudLogger.log(logger, "info", "Access server fail and try again");
 				setTimeout(function(){
 					weatherReq(zipCode, --retry, callback);
 				}, 1000);
 			}
 			else {
-				//Use backup weather provider
-				callback("goto backup", "done");
+				//Use backup service or not
+				//callback("goto backup", "done");
+				callback(error, "done");
 			}   
 		}
 	});
@@ -112,7 +108,7 @@ exports.get = function(zipCode, result) {
 	waterfall([
 		//First, get weather information form provider
 		function(callback){
-			weatherReq(zipCode, retryTimes, callback);
+			weatherReq(zipCode, process.env.RETRY_TIMES, callback);
 		},
 		//Second, parse current information and insert to database
 		function(weatherInfo, callback){
@@ -133,40 +129,68 @@ exports.get = function(zipCode, result) {
 				var currentJson = JSON.parse(JSON.stringify(currentObj));
 				couchbase.insertData(zipCode+"_current", currentJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
 						callback(null, weatherInfo);
 					}
 					else {
 						callback(databaseError, "done");
 					}
 				});
+
 			} catch(err) {
-				callback(parseError, "done");
+				callback(parseError + " in current", "done");
 			}
 		},
 		//Third, parse forcast information and insert to database
 		function(weatherInfo, callback){
 			try {
 				var forecastArray = [];
-				weatherInfo["data"]["weather"].forEach(function (val, idx) {
-					var obj = {
-						date: val["date"],
-						precipMM: val["precipMM"],
-						tempMaxC: val["tempMaxC"],
-						tempMaxF: val["tempMaxF"],
-						tempMinC: val["tempMinC"],
-						tempMinF: val["tempMinF"],
-						weatherCode: val["weatherCode"],
-						weatherDesc: val["weatherDesc"][0]["value"],
-						winddir16Point: val["winddir16Point"],
-						winddirDegree: val["winddirDegree"],
-						winddirection: val["winddirection"],
-						windspeedKmph: val["windspeedKmph"],
-						windspeedMiles: val["windspeedMiles"],
-						suggestWatering: (val["precipMM"] > 0) ? "1":"0"
-					}
-					forecastArray.push(obj);
-				});
+				switch(process.env.SERVER_VER) {
+					case 'v1':
+						weatherInfo["data"]["weather"].forEach(function (val, idx) {
+							var obj = {
+								date: val["date"],
+								precipMM: val["precipMM"],
+								tempMaxC: val["tempMaxC"],
+								tempMaxF: val["tempMaxF"],
+								tempMinC: val["tempMinC"],
+								tempMinF: val["tempMinF"],
+								weatherCode: val["weatherCode"],
+								weatherDesc: val["weatherDesc"][0]["value"],
+								winddir16Point: val["winddir16Point"],
+								winddirDegree: val["winddirDegree"],
+								winddirection: val["winddirection"],
+								windspeedKmph: val["windspeedKmph"],
+								windspeedMiles: val["windspeedMiles"],
+								suggestWatering: (val["precipMM"] > 0) ? "1":"0"
+							}
+							forecastArray.push(obj);
+						});
+					break;
+
+					case 'v2':
+						weatherInfo["data"]["weather"].forEach(function (val, idx) {
+							var obj = {
+								date: val["date"],
+								precipMM: val["hourly"][0]["precipMM"],
+								tempMaxC: val["hourly"][0]["tempMaxC"],
+								tempMaxF: val["hourly"][0]["tempMaxF"],
+								tempMinC: val["hourly"][0]["tempMinC"],
+								tempMinF: val["hourly"][0]["tempMinF"],
+								weatherCode: val["hourly"][0]["weatherCode"],
+								weatherDesc: val["hourly"][0]["weatherDesc"][0]["value"],
+								winddir16Point: val["hourly"][0]["winddir16Point"],
+								winddirDegree: val["hourly"][0]["winddirDegree"],
+								winddirection: val["hourly"][0]["winddirection"],
+								windspeedKmph: val["hourly"][0]["windspeedKmph"],
+								windspeedMiles: val["hourly"][0]["windspeedMiles"],
+								suggestWatering: (val["hourly"][0]["precipMM"] > 0) ? "1":"0"
+							}
+							forecastArray.push(obj);
+						});
+					break;
+				}
 				
 				forecastObj = {
 					data: {
@@ -177,7 +201,8 @@ exports.get = function(zipCode, result) {
 				var forecastJson = JSON.parse(JSON.stringify(forecastObj));
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert forecast JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert forecast JSON completed");
 						callback(null);
 					}
 					else {
@@ -185,7 +210,7 @@ exports.get = function(zipCode, result) {
 					}
 				});
 			} catch(err) {
-				callback(parseError, "done");
+				callback(parseError + " in forcast", "done");
 			}
 		},
 		//Forth, combine forecast and current and insert to database
@@ -199,10 +224,10 @@ exports.get = function(zipCode, result) {
 				};
 
 				var totalJson = JSON.parse(JSON.stringify(totalObj));
-				BlackCloudLogger.log(logger, "info", JSON.stringify(totalObj));
 				couchbase.insertData(zipCode + "", totalJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
 						callback(updateCompleted, "done");
 					}
 					else {
@@ -210,7 +235,7 @@ exports.get = function(zipCode, result) {
 					}                
 				});
 			} catch(err) {
-				callback(parseError, "done");
+				callback(parseError + " in total", "done");
 			}
 		}
 	], function (err, res) {
@@ -230,13 +255,15 @@ exports.get = function(zipCode, result) {
  */
 
 function weatherBackupReq(zipCode, feature, callback) {
-	var url = "http://" + weatherServerBackup + "/api/" + apiKeyBackup + "/" + feature 
-			   + "/q/" + zipCode + "." + formatBackup;
+	var url = "http://" + process.env.WEATHER_SERVER_BACKUP + "/api/" + process.env.WEATHER_APIKEY_BACKUP 
+              + "/" + feature + "/q/" + zipCode + "." + process.env.INFO_FORMAT;
 
 	request(url, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
-			BlackCloudLogger.log(logger, "info", "request: " + url);
-			//BlackCloudLogger.log(logger, "info", "body: " + body);
+			if(logEnable) {
+				BlackCloudLogger.log(logger, "info", "request: " + url);
+				//BlackCloudLogger.log(logger, "info", "body: " + body);
+			}
 			var weatherInfo = JSON.parse(body);
 
 			//Get Error MSG
@@ -256,7 +283,8 @@ function weatherBackupReq(zipCode, feature, callback) {
 			}		
 		}
 		else {
-			BlackCloudLogger.log(logger, "error", "request error: " + url);
+			if(logEnable)
+				BlackCloudLogger.log(logger, "error", "request error: " + url);
 			callback(serverError, "done");
 		}
 	});    
@@ -292,7 +320,8 @@ exports.getBackup = function(zipCode, result) {
 				var currentJson = JSON.parse(JSON.stringify(currentObj));
 				couchbase.insertData(zipCode+"_current", currentJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
 						callback(null);
 					}
 					else {
@@ -313,7 +342,8 @@ exports.getBackup = function(zipCode, result) {
 				var forecastArray = [];
 				weatherInfo["forecast"]["simpleforecast"]["forecastday"].forEach(function (val, idx) {
 					if(idx > 2){
-						BlackCloudLogger.log(logger, "info", "Too much forecast information");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Too much forecast information");
 						return;
 					}
 
@@ -345,7 +375,8 @@ exports.getBackup = function(zipCode, result) {
 				var forecastJson = JSON.parse(JSON.stringify(forecastObj));
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert forcast JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert forcast JSON completed");
 						callback(null);
 					}
 					else {
@@ -367,10 +398,12 @@ exports.getBackup = function(zipCode, result) {
 				};
 
 				var totalJson = JSON.parse(JSON.stringify(totalObj));
-				BlackCloudLogger.log(logger, "info", JSON.stringify(totalObj));
+				if(logEnable)
+					BlackCloudLogger.log(logger, "info", JSON.stringify(totalObj));
 				couchbase.insertData(zipCode + "", totalJson, function(err) {
 					if(err == 0) {
-						BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
+						if(logEnable)
+							BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
 						callback(updateCompleted, "done");   
 					}
 					else {

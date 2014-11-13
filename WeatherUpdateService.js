@@ -2,18 +2,24 @@ var time = require("time");
 var waterfall = require("async-waterfall");
 var limiter = require("simple-rate-limiter");
 var couchbase = require("./Couchbase");
+var dotEnv = require('dotenv');
 var weatherInfo = require("./WeatherInformation");
 var BlackCloudLogger = require("./BlackloudLogger");
 var logger = BlackCloudLogger.new("WeatherUpdateService");
+
+dotEnv.load();
+var logEnable = true;
 
 /*
  * ==================================================
  *             Calculate next timing
  * ==================================================
  */
-//Set by user
-var timing = 2;  //0 ~ 11
-var updateInterval = 12 * 60 * 60 * 1000; //every 12 hours
+
+if(logEnable) {
+	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_TIMING: " + process.env.UPDATE_TIMING);
+	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_INTERVAL: " + process.env.UPDATE_INTERVAL);
+}
 
 //Now time in west 
 var current = new time.Date();
@@ -23,13 +29,15 @@ var currentTime = Math.floor(new time.Date()/1000);
 var midnight = new time.Date(current.getFullYear(), current.getMonth(), current.getDate());
 var midnightTime = Math.floor(midnight/1000);
 
-BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
-BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
+if(logEnable) {
+	BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
+	BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
+}
 
 //ex.2:00 ___ 14:00 ___ 2:00
-var first = midnightTime + (timing * 60 * 60);
-var second = midnightTime + ((12 + timing) * 60 * 60);
-var third = midnightTime + ((24 + timing) * 60 * 60);
+var first = midnightTime + (process.env.UPDATE_TIMING * 60 * 60);
+var second = midnightTime + ((12 + process.env.UPDATE_TIMING) * 60 * 60);
+var third = midnightTime + ((24 + process.env.UPDATE_TIMING) * 60 * 60);
 
 //Calculate offset for first timing
 var offset;
@@ -43,8 +51,8 @@ else if(third > currentTime) {
 	offset = third - currentTime;
 }
 
-BlackCloudLogger.log(logger, "info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) 
-				+ "mins " + Math.floor(offset%60) + "secs ");
+if(logEnable)
+	BlackCloudLogger.log(logger, "info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) + "mins " + Math.floor(offset%60) + "secs ");
 
 /*
  * ==================================================
@@ -87,13 +95,14 @@ var updateInformation = function(initialize){
 					updateByMap();
 					setInterval(function(){
 						updateInformation(false);
-					}, updateInterval);
+					}, process.env.UPDATE_INTERVAL);
 				}, offset * 1000); //ms
 			}
 			callback(null, "done");
 		}
 	], function (err, res) {
-		BlackCloudLogger.log(logger, "info", "weather information task is done");
+		if(logEnable)
+			BlackCloudLogger.log(logger, "info", "weather information task is done");
 	});
 }
 updateInformation(true);
