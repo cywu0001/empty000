@@ -21,6 +21,7 @@
     "async-waterfall": "*",
     "request": "*",
     "hashmap": "*",
-	"simple-rate-limiter": "*"
+	"simple-rate-limiter": "*",
+	"dotenv": "*"
   }
 }

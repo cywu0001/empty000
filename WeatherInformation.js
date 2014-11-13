@@ -3,13 +3,14 @@ var request = require("request");
 var fs = require("fs");
 var waterfall = require("async-waterfall");
 var couchbase = require("./Couchbase");
-var dotEnv = require('dotenv');
+var dotEnv = require("dotenv");
 var weatherCodeMap = require("./WeatherCodeMapping");
 var BlackCloudLogger = require("./BlackloudLogger");
 var logger = BlackCloudLogger.new("WeatherInformation");
 
 dotEnv.load();
 var logEnable = true;
+var zipCodeLength = 5;
 
 //Error response from worldweatheronline
 var apiKeyErrorWWO = "is not a valid key";
@@ -42,7 +43,7 @@ function weatherReq(zipCode, retry, callback) {
     	"/weather.ashx?q=" + zipCode + "&format=" + process.env.INFO_FORMAT + 
         "&num_of_days=" + process.env.FORECAST_DAYS + "&key=" + process.env.WEATHER_APIKEY;
 
-   	if(zipCode.length != process.env.ZIPCODE_LENGTH) {
+   	if(zipCode.length != zipCodeLength) {
 		callback(zipCodeError + " " + zipCode + " is not five digital", "done");
 		return;
 	}
