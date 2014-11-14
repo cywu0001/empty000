@@ -109,7 +109,7 @@ exports.get = function(zipCode, result) {
 	waterfall([
 		//First, get weather information form provider
 		function(callback){
-			weatherReq(zipCode, process.env.RETRY_TIMES, callback);
+			weatherReq(zipCode, parseInt(process.env.RETRY_TIMES), callback);
 		},
 		//Second, parse current information and insert to database
 		function(weatherInfo, callback){

@@ -16,11 +16,6 @@ var logEnable = true;
  * ==================================================
  */
 
-if(logEnable) {
-	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_TIMING: " + process.env.UPDATE_TIMING);
-	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_INTERVAL: " + process.env.UPDATE_INTERVAL);
-}
-
 //Now time in west 
 var current = new time.Date();
 var currentTime = Math.floor(new time.Date()/1000);
@@ -30,14 +25,17 @@ var midnight = new time.Date(current.getFullYear(), current.getMonth(), current.
 var midnightTime = Math.floor(midnight/1000);
 
 if(logEnable) {
+	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_TIMING: " + parseInt(process.env.UPDATE_TIMING));
+	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_INTERVAL: " + parseInt(process.env.UPDATE_INTERVAL));
 	BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
 	BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
 }
 
 //ex.2:00 ___ 14:00 ___ 2:00
-var first = midnightTime + (process.env.UPDATE_TIMING * 60 * 60);
-var second = midnightTime + ((12 + process.env.UPDATE_TIMING) * 60 * 60);
-var third = midnightTime + ((24 + process.env.UPDATE_TIMING) * 60 * 60);
+var updateTiming = parseInt(process.env.UPDATE_TIMING);
+var first = midnightTime + (updateTiming * 60 * 60);
+var second = midnightTime + ((12 + updateTiming) * 60 * 60);
+var third = midnightTime + ((24 + updateTiming) * 60 * 60);
 
 //Calculate offset for first timing
 var offset;
@@ -95,7 +93,7 @@ var updateInformation = function(initialize){
 					updateByMap();
 					setInterval(function(){
 						updateInformation(false);
-					}, process.env.UPDATE_INTERVAL);
+					}, parseInt(process.env.UPDATE_INTERVAL));
 				}, offset * 1000); //ms
 			}
 			callback(null, "done");
