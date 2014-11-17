@@ -1,9 +1,16 @@
 var http = require("http");
 var couchbase = require('couchbase');
 var merge = require('merge');
-var bucketfd = 'default';
-var couchbaseserver = "54.68.203.148:8091";
-var c_couchbase = 'http://54.68.203.148:8092';
+var dotEnv = require("dotenv");
+var BlackCloudLogger = require("./BlackloudLogger");
+var logger = BlackCloudLogger.new("Couchbase");
+
+
+dotEnv.load();
+
+var bucketfd = process.env.BUCKETFD;
+var couchbaseserver = process.env.COUCHBASE_SERVER;
+var c_couchbase = process.env.C_COUCHBASE;
 var success = 0;
 
 var response_data = {
@@ -25,6 +32,7 @@ exports.insertData = function insertData(key,w_data ,result) {
     	myBucket.replace(key, JSON.stringify(w_data), function(err,data){
 			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 				console.log("Failed to replace data\n");
+				BlackCloudLogger.log(logger, "info", "insertData():Failed to replace data "+key);
 				result(err, null);
 			}else
 			{
@@ -60,6 +68,7 @@ exports.getData = function getData(zip ,result) {
    myBucket.get(zip,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to get data\n");
+	 BlackCloudLogger.log(logger, "info", "getData():Failed to get data "+zip);
 	 result(err, null);
 	 return;
    }
