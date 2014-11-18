@@ -39,7 +39,6 @@
 var AWS = require('aws-sdk');
 var fs = require('fs');
 
-
 //Blackloud API
 
 module.exports = {
@@ -128,17 +127,17 @@ putObj: function( bucketname, objname)
 getObj: function( bucketname, objname)
 {
 	var s3 = new AWS.S3();
+
 	var filePath = fs.createWriteStream(objname);
-	s3.getObject
-	(
-		{ Bucket:bucketname, Key:objname } 
-	).createReadStream().pipe(
-		filePath,
-		function(err, data)
-                {
-                        if (err) console.log(err, err.stack); // an error occurred
-                        else     console.log("Get "+objname+" success!!!");           // successful response
-                });
+
+	s3.getObject({ Bucket:bucketname, Key:objname}).
+	on('httpData', function(chunk) { filePath.write(chunk); }).
+	on('httpDone', function() { filePath.end(); }).
+	send(
+		function(err,data)
+		{
+			if (err) console.log("Get "+objname+" fail!!!"/*err, err.stack*/); // an error occurred
+                        else     console.log("Get "+objname+" success!!!");});
 	s3 = null;
         delete s3;
 },
