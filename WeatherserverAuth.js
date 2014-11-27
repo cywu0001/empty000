@@ -3,14 +3,13 @@ var https = require('https');
 var express = require('express');
 var passport = require('passport');
 var bodyparser = require('body-parser');
+var dotEnv = require("dotenv");
 
-
-HTTP_PORT=88;
-HTTPS_PORT=443;
+dotEnv.load();
 
 var server,
-    ip   = "54.68.203.148",
-    port = 443,
+    ip   = process.env.AUTH_SERVER_HTTPS_IP,
+    port = process.env.AUTH_SERVER_HTTPS_PORT,
     qs = require('querystring'),
     http = require('http');
     url = require('url');
@@ -196,7 +195,6 @@ var register = function(app){
 
 var http = express();
 register(http);
-http.listen(HTTP_PORT);
 
 var options = {
 	key: fs.readFileSync(__dirname + "/ssl.key"),
@@ -205,6 +203,9 @@ var options = {
 	requestCert: true,
 	rejectUnauthorized: false,
 };
-https.createServer(options, http).listen(HTTPS_PORT);
+
+https.createServer(options, http).listen(port);
+
 blackloudlogger.log(logger, 'info', 'Server running at https ip='+ip);
 blackloudlogger.log(logger, 'info', 'Server running at https port='+port);
+
