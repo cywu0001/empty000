@@ -164,7 +164,7 @@ exports.get = function(zipCode, result) {
 								winddirection: val["winddirection"],
 								windspeedKmph: val["windspeedKmph"],
 								windspeedMiles: val["windspeedMiles"],
-								suggestWatering: (val["precipMM"] > 0) ? "1":"0"
+								suggestWatering: (parseFloat(val["precipMM"]) > 0) ? "0":"1"
 							}
 							forecastArray.push(obj);
 						});
@@ -186,7 +186,7 @@ exports.get = function(zipCode, result) {
 								winddirection: val["hourly"][0]["winddirection"],
 								windspeedKmph: val["hourly"][0]["windspeedKmph"],
 								windspeedMiles: val["hourly"][0]["windspeedMiles"],
-								suggestWatering: (val["hourly"][0]["precipMM"] > 0) ? "1":"0"
+								suggestWatering: (parseFloat(val["hourly"][0]["precipMM"]) > 0) ? "0":"1"
 							}
 							forecastArray.push(obj);
 						});
@@ -362,7 +362,7 @@ exports.getBackup = function(zipCode, result) {
 						winddirection: val["avewind"]["dir"],
 						windspeedKmph: val["avewind"]["kph"],
 						windspeedMiles: val["avewind"]["mkh"],
-						suggestWatering: (val["qpf_allday"]["mm"] > 0) ? "1":"0"
+						suggestWatering: (parseFloat(val["qpf_allday"]["mm"]) > 0) ? "0":"1"
 					}
 					forecastArray.push(obj);
 				});
