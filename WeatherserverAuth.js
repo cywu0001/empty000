@@ -197,11 +197,13 @@ var http = express();
 register(http);
 
 var options = {
-	key: fs.readFileSync(__dirname + "/ssl.key"),
-	cert: fs.readFileSync(__dirname + "/ssl.cert"),
-	ca:[fs.readFileSync(__dirname + "/ca.pem")],
-	requestCert: true,
-	rejectUnauthorized: false,
+
+    key: fs.readFileSync(__dirname + process.env.AUTH_SERVER_KEY),
+    cert: fs.readFileSync(__dirname + process.env.AUTH_SERVER_CERT),
+    ca:[fs.readFileSync(__dirname + process.env.AUTH_SERVER_CA)],
+
+    requestCert: true,
+    rejectUnauthorized: false,
 };
 
 https.createServer(options, http).listen(port);
