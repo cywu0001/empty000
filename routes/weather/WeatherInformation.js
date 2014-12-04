@@ -2,13 +2,13 @@ var http = require("http");
 var request = require("request");
 var fs = require("fs");
 var waterfall = require("async-waterfall");
-var couchbase = require("./Couchbase");
 var dotEnv = require("dotenv");
 var weatherCodeMap = require("./WeatherCodeMapping");
-var BlackCloudLogger = require("./BlackloudLogger");
-var logger = BlackCloudLogger.new("WeatherInformation");
-
-dotEnv.load();
+var couchbase = require("./Couchbase");
+var file = fs.readFileSync(__dirname + "/.env");
+var env = dotEnv.parse(file);
+var BlackCloudLogger = require("../../utils/BlackloudLogger");
+var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherInfomation");
 var logEnable = true;
 var zipCodeLength = 5;
 
@@ -39,9 +39,9 @@ var exceededPerDayError = "exceeded per day error";
  */
 
 function weatherReq(zipCode, retry, callback) {
-	var url = "http://" + process.env.WEATHER_SERVER + process.env.SERVER_VER + 
-    	"/weather.ashx?q=" + zipCode + "&format=" + process.env.INFO_FORMAT + 
-        "&num_of_days=" + process.env.FORECAST_DAYS + "&key=" + process.env.WEATHER_APIKEY;
+	var url = "http://" + env.WEATHER_SERVER + env.SERVER_PATH + 
+    	"/weather.ashx?q=" + zipCode + "&format=" + env.INFO_FORMAT + 
+        "&num_of_days=" + env.FORECAST_DAYS + "&key=" + env.WEATHER_APIKEY;
 
    	if(zipCode.length != zipCodeLength) {
 		callback(zipCodeError + " " + zipCode + " is not five digital", "done");
@@ -109,7 +109,7 @@ exports.get = function(zipCode, result) {
 	waterfall([
 		//First, get weather information form provider
 		function(callback){
-			weatherReq(zipCode, parseInt(process.env.RETRY_TIMES), callback);
+			weatherReq(zipCode, parseInt(env.RETRY_TIMES), callback);
 		},
 		//Second, parse current information and insert to database
 		function(weatherInfo, callback){
@@ -147,8 +147,8 @@ exports.get = function(zipCode, result) {
 		function(weatherInfo, callback){
 			try {
 				var forecastArray = [];
-				switch(process.env.SERVER_VER) {
-					case 'v1':
+				switch(env.SERVER_PATH) {
+					case '/free/v1':
 						weatherInfo["data"]["weather"].forEach(function (val, idx) {
 							var obj = {
 								date: val["date"],
@@ -170,7 +170,7 @@ exports.get = function(zipCode, result) {
 						});
 					break;
 
-					case 'v2':
+					case '/free/v2':
 						weatherInfo["data"]["weather"].forEach(function (val, idx) {
 							var obj = {
 								date: val["date"],
@@ -256,8 +256,8 @@ exports.get = function(zipCode, result) {
  */
 
 function weatherBackupReq(zipCode, feature, callback) {
-	var url = "http://" + process.env.WEATHER_SERVER_BACKUP + "/api/" + process.env.WEATHER_APIKEY_BACKUP 
-              + "/" + feature + "/q/" + zipCode + "." + process.env.INFO_FORMAT;
+	var url = "http://" + env.WEATHER_SERVER_BACKUP + "/api/" + env.WEATHER_APIKEY_BACKUP 
+              + "/" + feature + "/q/" + zipCode + "." + env.INFO_FORMAT;
 
 	request(url, function (error, response, body) {
 		if (!error && response.statusCode == 200) {

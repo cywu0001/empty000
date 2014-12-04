@@ -1,13 +1,14 @@
+var fs = require("fs");
 var time = require("time");
 var waterfall = require("async-waterfall");
 var limiter = require("simple-rate-limiter");
-var couchbase = require("./Couchbase");
 var dotEnv = require("dotenv");
 var weatherInfo = require("./WeatherInformation");
-var BlackCloudLogger = require("./BlackloudLogger");
-var logger = BlackCloudLogger.new("WeatherUpdateService");
-
-dotEnv.load();
+var couchbase = require("./Couchbase");
+var file = fs.readFileSync(__dirname + "/.env");
+var env = dotEnv.parse(file);
+var BlackCloudLogger = require("../../utils/BlackloudLogger");
+var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherUpdateService");
 var logEnable = true;
 
 /*
@@ -25,14 +26,14 @@ var midnight = new time.Date(current.getFullYear(), current.getMonth(), current.
 var midnightTime = Math.floor(midnight/1000);
 
 if(logEnable) {
-	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_TIMING: " + parseInt(process.env.UPDATE_TIMING));
-	BlackCloudLogger.log(logger, "info", "process.env.UPDATE_INTERVAL: " + parseInt(process.env.UPDATE_INTERVAL));
+	BlackCloudLogger.log(logger, "info", "env.UPDATE_TIMING: " + parseFloat(env.UPDATE_TIMING));
+	BlackCloudLogger.log(logger, "info", "env.UPDATE_INTERVAL: " + parseInt(env.UPDATE_INTERVAL));
 	BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
 	BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
 }
 
 //ex.2:00 ___ 14:00 ___ 2:00
-var updateTiming = parseInt(process.env.UPDATE_TIMING);
+var updateTiming = parseFloat(env.UPDATE_TIMING);
 var first = midnightTime + (updateTiming * 60 * 60);
 var second = midnightTime + ((12 + updateTiming) * 60 * 60);
 var third = midnightTime + ((24 + updateTiming) * 60 * 60);
@@ -93,7 +94,7 @@ var updateInformation = function(initialize){
 					updateByMap();
 					setInterval(function(){
 						updateInformation(false);
-					}, parseInt(process.env.UPDATE_INTERVAL));
+					}, parseInt(env.UPDATE_INTERVAL));
 				}, offset * 1000); //ms
 			}
 			callback(null, "done");

@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+var debug = require('debug')('node');
+var app = require('../app');
+var ssl = require('../ssl');
+
+var http = require('http'),
+    https = require('https');
+
+app.set('httpsport', 443);
+var httpsServer = https.createServer(ssl.options, app).listen(app.get('httpsport'));

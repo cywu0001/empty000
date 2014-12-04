@@ -7,9 +7,9 @@ else
   npm install
   echo "=========================\n"
 fi
-sudo pm2 start BlackloudLogAutoUpdate.js -i 1
-sudo pm2 start WeatherserverAuth.js -i 1
-sudo pm2 start WeatherUpdateService.js -i 1
+#sudo pm2 start ./utils/BlackloudLogAutoUpdate.js -i 1
+sudo pm2 start ./routes/weather/WeatherUpdateService.js -i 1
+sudo pm2 start ./bin/www -i 1
 if [ $? != 0 ];then
   echo "Stop run weather server...."
 fi
