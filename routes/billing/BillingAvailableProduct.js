@@ -1,15 +1,17 @@
+var fs = require("fs");
+var dotEnv = require("dotenv");
+var file = fs.readFileSync(__dirname + "/.env");
+var env = dotEnv.parse(file);
 
-var billingPurchasingStat = require('./BillingPurchasingStat');
-var dotenv = require('dotenv').load();
 var google = require('googleapis');
 var androidpublisher = google.androidpublisher('v2');
 var OAuth2 = google.auth.OAuth2;
-var packageName  = process.env.PACKAGE_NAME;
-var clientID     = process.env.CLIENT_ID;
-var clientSecret = process.env.CLIENT_SECRET;
-var redirectURL  = process.env.REDIRECT_URL;
-var code         = process.env.CODE;
-var refreshToken = process.env.REFRESH_TOKEN;
+var packageName  = env.PACKAGE_NAME;
+var clientID     = env.CLIENT_ID;
+var clientSecret = env.CLIENT_SECRET;
+var redirectURL  = env.REDIRECT_URL;
+var code         = env.CODE;
+var refreshToken = env.REFRESH_TOKEN;
 var oauth2Client = new OAuth2(clientID, clientSecret, redirectURL);
 
 var statusCode = 
@@ -84,7 +86,6 @@ var available_product = function(body, fail, pass) {
 				};
 				if( productList.length > 0 )
 				{
-					billingPurchasingStat.cancel();
 					ret = {
 						status: statusCode[0], 
 						product: product
@@ -103,4 +104,4 @@ var available_product = function(body, fail, pass) {
 		});
 }
 
-exports.module = available_product;
+exports.get = available_product;
