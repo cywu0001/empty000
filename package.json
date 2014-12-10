@@ -23,6 +23,7 @@
     "hashmap": "*",
     "simple-rate-limiter": "*",
     "dotenv": "*",
-    "q": "*"
+    "q": "*",
+	"googleapis": "*",
   }
 }
