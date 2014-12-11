@@ -103,9 +103,7 @@ exports.getData = function getData(zip ,result) {
 	 return;
    }
    var out_json = JSON.parse(data.value);
-   response_data = merge(response_data,out_json);
-    console.log("Get data:",JSON.stringify(response_data));
-   result(err, JSON.stringify(response_data));
+   result(err, JSON.stringify(out_json));
    myBucket.disconnect();
  });
 }

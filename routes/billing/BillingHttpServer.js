@@ -8,6 +8,7 @@ var BlackCloudLogger = require("../../utils/BlackloudLogger");
 var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingHttpServer");
 var purchasingStat = require("./BillingPurchasingStat");
 var blackloudTokenVerify = require("./BlackloudTokenVerify");
+var billingPurchaseQuery = require("./BillingPurchaseQuery");
 
 var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
@@ -184,8 +185,8 @@ router.post("/query_purchased_product"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_product: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingPurchaseQuery.query_purchased_product(res, req.body.user_ID, req.body.device_ID);
+
 });
 
 router.post("/query_purchased_all_product"
@@ -194,8 +195,8 @@ router.post("/query_purchased_all_product"
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_all_product: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingPurchaseQuery.query_purchased_all_product(res, req.body.user_ID, req.body.package_name);
+
 });
 
 router.post("/query_purchased_history"
@@ -203,12 +204,9 @@ router.post("/query_purchased_history"
             ,userIDVerify
             ,deviceIDVerify
             ,packageNameVerify
-            ,startDateVerify
-            ,endDateVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_history: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingPurchaseQuery.query_purchased_history(res, req.body.user_ID, req.body.package_name);
 });
 
 router.post("/is_purchasing"
@@ -253,5 +251,29 @@ router.post("/renew_purchased_all_product"
     res.statusCode = 200;
     res.end("200 OK");
 });
+
+
+router.post("/is_enable_trial"
+            ,tokenVerify
+            ,deviceIDVerify
+            ,function(req, res) {
+    BlackCloudLogger.log(logger, "info", "is_enable_trial: " + JSON.stringify(req.body));
+
+    billingPurchaseQuery.is_enable_trial(res, req.body.device_ID);
+
+});
+
+router.post("/enable_trial"
+            ,tokenVerify
+            ,userIDVerify
+            ,deviceIDVerify
+            ,function(req, res) {
+    BlackCloudLogger.log(logger, "info", "enable_trial: " + JSON.stringify(req.body));
+
+    billingPurchaseQuery.enable_trial(res, req.body.user_ID, req.body.device_ID);
+
+});
+
+
 
 module.exports = router;
