@@ -24,6 +24,7 @@
     "simple-rate-limiter": "*",
     "dotenv": "*",
     "q": "*",
-	"googleapis": "*"
+	"googleapis": "*",
+    "multer": "*"
   }
 }

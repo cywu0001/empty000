@@ -3,6 +3,7 @@ var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var fs = require("fs");
 var https = require("https");
+var multer  = require("multer");
 
 var weatherServer = require("./routes/weather/WeatherHttpServer");
 var billingServer = require("./routes/billing/BillingHttpServer");
@@ -19,6 +20,18 @@ app.use("/alive", function(req, res, next) {
     res.end("alive");
     next();
 });
+
+//upload file
+app.use(multer({ dest: './uploads/', 
+rename: function (fieldname, filename) {
+    return filename;
+},
+onFileUploadStart: function (file) {
+  console.log(file.originalname + ' is starting ...')
+},
+onFileUploadComplete: function (file) {
+  console.log(file.fieldname + ' uploaded to  ' + file.path)
+}}));
 
 app.use("/v1", weatherServer);
 app.use("/v1/billing", billingServer);

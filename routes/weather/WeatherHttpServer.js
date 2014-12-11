@@ -95,6 +95,28 @@ function getInfoFromWeb(params) {
     });
 }
 
+function readUploadFile(req,res,type)
+{
+	var obj;
+	res.end("File uploaded.");
+	fs.readFile('./uploads/temp', 'utf8', function (err, data) {
+	if (err) throw err;
+	console.log("zip code:\n"+req.query.zipcode);
+	//console.log("get file:\n"+data);
+
+	couchbase.replaceData(req.query.zipcode+"_"+type,data,function (err, data) {
+		if (err)
+		{ 
+			console.log("get some error:\n",err);
+		}
+		if(data)
+		{
+			console.log(data);
+		}
+	});
+	});
+}
+
 /* GET forecast. */
 router.get("/forecastweather", clientAuthentication, parameterCheck, function(req, res) {
     getInfoFromDB(res, req.query.zipcode, "forecast")
@@ -105,6 +127,18 @@ router.get("/forecastweather", clientAuthentication, parameterCheck, function(re
 router.get("/currentweather", clientAuthentication, parameterCheck, function(req, res) {
     getInfoFromDB(res, req.query.zipcode, "current")
         .then(null, getInfoFromWeb);
+});
+
+/* POST forecast. */
+router.post("/forecastweather", clientAuthentication, parameterCheck, function(req, res) {
+    console.log("forecastweather post");
+    readUploadFile(req,res,"forecast");
+});
+
+/* POST current. */
+router.post("/currentweather", clientAuthentication, parameterCheck, function(req, res) {
+    console.log("currentweather post");
+    readUploadFile(req,res,"current");
 });
 
 module.exports = router;

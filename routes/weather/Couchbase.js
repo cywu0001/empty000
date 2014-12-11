@@ -51,6 +51,36 @@ exports.insertData = function insertData(key,w_data ,result) {
  });
 }
 
+exports.replaceData = function replaceData(key,w_data ,result) {
+ console.log("insertData....\n");
+ // Insert the data in Couchbase using the add method ()
+   var cb = new couchbase.Cluster(couchbaseserver);
+   var myBucket = cb.openBucket(bucketfd);
+   myBucket.insert(key, JSON.stringify(w_data), function(err,data) {
+   if (err && err != 12) { // 12 : LCB_KEY_EEXISTS 
+        console.log("Failed to insert data\n");
+    	myBucket.replace(key, w_data, function(err,data){
+			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
+				console.log("Failed to replace data\n");
+				BlackCloudLogger.log(logger, "info", "insertData():Failed to replace data "+key);
+				result(err, null);
+			}else
+			{
+				console.log("Replace data success\n");
+				result(success, null);
+			}			
+		    myBucket.disconnect();
+
+		});
+   }else
+   {
+	  console.log("Insert data success\n");	  
+   	  result(success, null);
+	  myBucket.disconnect();
+   }
+ });
+}
+
 exports.getZIP = function getZIP(result) {
   // retrieve data from a view
   var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
