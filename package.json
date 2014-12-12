@@ -25,6 +25,7 @@
     "dotenv": "*",
     "q": "*",
 	"googleapis": "*",
+	"in-app-purchase": "*",
     "multer": "*"
   }
 }

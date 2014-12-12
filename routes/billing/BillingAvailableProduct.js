@@ -15,63 +15,62 @@ var refreshToken = env.REFRESH_TOKEN;
 var oauth2Client = new OAuth2(clientID, clientSecret, redirectURL);
 
 var statusCode = 
-[
-	{
+{
+	'pass': {
 		code: 1211, 
 		message: 'Query available product success'
 	}, 
-	{
+	'missing': {
 		code: 1400, 
 		message: 'Missing parameter'
 	}, 
-	{
+	'nodata': {
 		code: 1411, 
 		message: 'No data found'
 	} 
-];
+};
 
-var available_product = function(body, fail, pass) {
-	var access_token = body.access_token;
+var available_product = function(body, response) {
 	var packageName = body.package_name;
 	var ret;
 
-	if( access_token == null || access_token == '' || packageName == null || packageName == '' )
+	if( packageName == null || packageName == '' )
 	{
 		ret = {
-			status: statusCode[1], 
+			status: statusCode['missing'], 
 		}
-		if(typeof fail == 'function' && fail != null ) 
-			fail(ret);
+		response.statusCode = 400;
+		response.send(ret);
 		return;
 	}
 
 	oauth2Client.setCredentials({
-		token: access_token,
 		refresh_token: refreshToken
 	});
 
 	androidpublisher.inappproducts.list({
 		packageName: packageName,
 		auth: oauth2Client
-	}, function(err, response) {
+	}, function(err, res) {
 			if(err)
 			{
 				if(err.message.indexOf('Missing') >= 0)
 				{
 					ret = {
-						status: statusCode[1], 
+						status: statusCode['missing'], 
 						data: err
 					}
+					response.statusCode = 400;
 				}
 				else
 				{
 					ret = {
-						status: statusCode[2], 
+						status: statusCode['nodata'], 
 						data: err
 					}
+					response.statusCode = 500;
 				}
-				if(typeof fail == 'function' && fail != null ) 
-					fail(ret);
+				response.send(ret);
 			}
 			else
 			{
@@ -87,18 +86,19 @@ var available_product = function(body, fail, pass) {
 				if( productList.length > 0 )
 				{
 					ret = {
-						status: statusCode[0], 
+						status: statusCode['pass'], 
 						product: product
 					}
+					response.statusCode = 200;
 				}
 				else
 				{
 					ret = {
-						status: statusCode[2]
+						status: statusCode['nodata']
 					};
+					response.statusCode = 500;
 				}
-				if(typeof pass == 'function' && pass != null ) 
-					pass(ret);
+				response.send(ret);
 				console.log(ret);
 			}
 		});
