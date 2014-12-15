@@ -14,10 +14,9 @@ var enable_success = {"status" :{"code": 1222, "message": "Enabled trial success
 var nodata = {"status":{"code":1411,"message":"No data found"}};
 var enabletrialfail = {"status":{"code":1415,"message":"Fail to enable trial"}};
 
-
-exports.query_purchased_product = function query_purchased_product(response, user_ID, device_ID) {
+exports.query_purchased_product = function query_purchased_product(request, response) {
 	//query database
-	var purchasekey = user_ID + "_purchased";
+	var purchasekey = request.body.user_ID + "_Purchased_Product";
     console.log("query_purchased_product purchasekey=" + purchasekey);
 
 	couchbase.getData(purchasekey, function(err, data) {
@@ -31,17 +30,17 @@ exports.query_purchased_product = function query_purchased_product(response, use
 			console.log("Successed to get data\n");
 			console.log(data);
 			var datajson = JSON.parse(data);
-
+			console.log("length="+datajson["product"]["product_list"].length);
 			if (datajson["product"]["product_list"].length > 0) {
 				for(var i=0; i<datajson["product"]["product_list"].length; i++) {
-					if (datajson["product"]["product_list"][i]["device_ID"] == device_ID) {
+					if (datajson["product"]["product_list"][i]["device_ID"] == request.body.device_ID) {
 						var PurchaseObj;
 						PurchaseObj = {
-							user_ID : user_ID,
+							user_ID : request.body.user_ID,
 							product: {
 								product_list:[
 									{
-										device_ID : device_ID,
+										device_ID : request.body.device_ID,
 										product_ID : datajson["product"]["product_list"][i]["product_ID"],
 										start_Date : datajson["product"]["product_list"][i]["start_Date"],
 										end_Date : datajson["product"]["product_list"][i]["end_Date"],
@@ -55,7 +54,7 @@ exports.query_purchased_product = function query_purchased_product(response, use
 	    				response.statusCode = 200;
 						response.end(JSON.stringify(outputdata));
 						return;
-					}			
+					}
 				}
 		        response.statusCode = 500;
 		        response.end(JSON.stringify(nodata));
@@ -68,10 +67,12 @@ exports.query_purchased_product = function query_purchased_product(response, use
 	});
 }
 
-exports.query_purchased_all_product = function query_purchased_all_product(response, user_ID, package_name) {
+exports.query_purchased_all_product = function query_purchased_all_product(request, response) {
 	//query database
-	var purchasekey = user_ID + "_purchased";
+	var purchasekey = request.body.user_ID + "_Purchased_Product";
+
     console.log("query_purchased_all_product purchasekey=" + purchasekey);
+
 
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
@@ -83,17 +84,44 @@ exports.query_purchased_all_product = function query_purchased_all_product(respo
 		else {
 			console.log("Successed to get data\n");
 			console.log(data);
-			var purchaseallresult = JSON.parse(data)
-			var outputdata = merge(purchase_all_success,purchaseallresult);
-			response.statusCode = 200;
-			response.end(JSON.stringify(outputdata));
+			var datajson = JSON.parse(data);
+			var resultArray = [];
+			if (datajson["product"]["product_list"].length > 0) {
+				for(var i=0; i<datajson["product"]["product_list"].length; i++) {					
+					var PurchaseObj;
+					PurchaseObj = {
+						device_ID : datajson["product"]["product_list"][i]["device_ID"],
+						product_ID : datajson["product"]["product_list"][i]["product_ID"],
+						start_Date : datajson["product"]["product_list"][i]["start_Date"],
+						end_Date : datajson["product"]["product_list"][i]["end_Date"],
+						store : datajson["product"]["product_list"][i]["store"]
+					};
+					resultArray.push(PurchaseObj);			
+				}
+				resultObj = {
+					user_ID : request.body.user_ID,
+					product: {
+						product_list:[
+							resultArray
+						]
+					}
+				};
+					var purchaseresult = JSON.parse(JSON.stringify(resultObj));
+					var outputdata = merge(purchase_success,purchaseresult);
+				response.end(JSON.stringify(outputdata));
+				return;
+			}
+			else {
+		            response.statusCode = 500;
+		            response.end(JSON.stringify(nodata));
+			}
 		}
 	});
 }
 
-exports.query_purchased_history = function query_purchased_history(response, user_ID, package_name) {
+exports.query_purchased_history = function query_purchased_history(request, response) {
 	//query database
-	var purchasekey = user_ID + "_" + package_name;
+	var purchasekey = request.body.user_ID + "_" + request.body.package_name;
     console.log("query_purchased_history purchasekey=" + purchasekey);
 
 	couchbase.getData(purchasekey, function(err, data) {
@@ -112,10 +140,10 @@ exports.query_purchased_history = function query_purchased_history(response, use
 }
 
 
-exports.is_enable_trial = function is_enable_trial(response, device_ID) {
+exports.is_enable_trial = function is_enable_trial(request, response) {
 	var trialresult;
 	//get trial data
-	couchbase.getData(device_ID, function(err, data) {
+	couchbase.getData(request.body.device_ID, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 			console.log("Failed to get data\n");
 			console.log(data);
@@ -141,7 +169,7 @@ exports.is_enable_trial = function is_enable_trial(response, device_ID) {
 
 }
 
-exports.enable_trial = function enable_trial(response, user_ID, device_ID) {
+exports.enable_trial = function enable_trial(request, response) {
 	//get start date and end date
 	var date = new Date();
 	var resultenabledate = date.getFullYear() +'.' +(date.getMonth()+1) +'.' +date.getDate();
@@ -152,18 +180,19 @@ exports.enable_trial = function enable_trial(response, user_ID, device_ID) {
 	var resultdatestr = resultdate.toString();
 
 	//insert to trial db
+	var trialkey = request.body.device_ID + "_trial";
 	var TrialObj;
 	TrialObj = {
 		Trial: [
 			{
-				device_ID : device_ID,
-				user_ID : user_ID,
+				device_ID : request.body.device_ID,
+				user_ID : request.body.user_ID,
 				is_enabled_trial : "1"
 			}
 		]
 	};
 	var TrialJson = JSON.parse(JSON.stringify(TrialObj));
-	couchbase.insertData(device_ID, TrialJson, function(err) {
+	couchbase.insertData(trialkey, TrialJson, function(err) {
 		if(err == 0) {
     		console.log("insert to trial db success");
 		}
@@ -177,14 +206,14 @@ exports.enable_trial = function enable_trial(response, user_ID, device_ID) {
 
 
 	//insert to Purchased_Product db
-	var trialkey = user_ID + "_trial_purchased";
+	var trialpurchasekey = request.body.user_ID + "_trial_purchased";
 	var PurchaseObj;
 	PurchaseObj = {
-		user_ID : user_ID,
+		user_ID : request.body.user_ID,
 		product: {
 			product_list: [
 				{
-					device_ID : device_ID,
+					device_ID : request.body.device_ID,
 					product_ID : "trial",
 					start_Date : resultenabledatestr,
 					end_Date : resultdatestr,
@@ -195,7 +224,7 @@ exports.enable_trial = function enable_trial(response, user_ID, device_ID) {
 	};
 
 	var PurchaseJson = JSON.parse(JSON.stringify(PurchaseObj));
-	couchbase.insertData(trialkey, PurchaseJson, function(err) {
+	couchbase.insertData(trialpurchasekey, PurchaseJson, function(err) {
 		if(err == 0) {
     		console.log("insert to Purchased_Product db success");
 		}

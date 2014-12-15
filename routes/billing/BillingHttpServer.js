@@ -184,7 +184,8 @@ router.post("/query_purchased_product"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_product: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_product(res, req.body.user_ID, req.body.device_ID);
+
+    billingPurchaseQuery.query_purchased_product(req, res);
 
 });
 
@@ -194,7 +195,7 @@ router.post("/query_purchased_all_product"
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_all_product: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_all_product(res, req.body.user_ID, req.body.package_name);
+    billingPurchaseQuery.query_purchased_all_product(req, res);
 
 });
 
@@ -205,7 +206,7 @@ router.post("/query_purchased_history"
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_history: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_history(res, req.body.user_ID, req.body.package_name);
+    billingPurchaseQuery.query_purchased_history(req, res);
 });
 
 router.post("/is_purchasing"
@@ -254,7 +255,7 @@ router.post("/is_enable_trial"
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "is_enable_trial: " + JSON.stringify(req.body));
 
-    billingPurchaseQuery.is_enable_trial(res, req.body.device_ID);
+    billingPurchaseQuery.is_enable_trial(req, res);
 
 });
 
@@ -265,7 +266,7 @@ router.post("/enable_trial"
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "enable_trial: " + JSON.stringify(req.body));
 
-    billingPurchaseQuery.enable_trial(res, req.body.user_ID, req.body.device_ID);
+    billingPurchaseQuery.enable_trial(req, res);
 
 });
 
