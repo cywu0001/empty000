@@ -29,7 +29,7 @@ var verify_receipt_apple = function(body, response)
 	    userID        = body.user_ID,
 		deviceID      = body.device_ID,
 		productID     = body.product_ID, 
-		packageName   = body.package_name,
+		packageName   = body.package_name;
 
 	var ret;
 
@@ -99,7 +99,7 @@ var verify_receipt_google = function(body, response)
 	    userID          = body.user_ID,
 		deviceID        = body.device_ID,
 		productID       = body.product_ID, 
-		packageName     = body.package_name,
+		packageName     = body.package_name;
 
 	var ret;
 	var googleReceipt = {
