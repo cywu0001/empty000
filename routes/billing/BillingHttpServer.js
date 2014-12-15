@@ -9,6 +9,7 @@ var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingHttpServer");
 var purchasingStat = require("./BillingPurchasingStat");
 var blackloudTokenVerify = require("./BlackloudTokenVerify");
 var billingPurchaseQuery = require("./BillingPurchaseQuery");
+var billingVerifyReceipt = require("./BillingVerifyReceipt");
 
 var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
@@ -164,8 +165,7 @@ router.post("/verify_receipt_apple"
             ,passwordVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_apple: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingVerifyReceipt.apple(req.body, res);
 });
 
 router.post("/verify_receipt_google"
@@ -175,8 +175,7 @@ router.post("/verify_receipt_google"
             ,purchaseTokenVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_google: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingVerifyReceipt.google(req.body, res);
 });
 
 router.post("/query_purchased_product"
@@ -215,9 +214,7 @@ router.post("/is_purchasing"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "is_purchasing: " + JSON.stringify(req.body));
-    var json = purchasingStat.get(req.body.user_ID+req.body.device_ID+req.body.product_ID);
-    res.statusCode = 200;
-    res.end(JSON.stringify(json));
+    purchasingStat.get(req.body, res);
 });
 
 router.post("/set_purchasing"
@@ -226,9 +223,7 @@ router.post("/set_purchasing"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "set_purchasing: " + JSON.stringify(req.body));
-    var json = purchasingStat.set(req.body.user_ID+req.body.device_ID+req.body.product_ID);
-    res.statusCode = 200;
-    res.end(JSON.stringify(json));
+    purchasingStat.set(req.body, res);
 });
 
 router.post("/renew_purchased_product"
