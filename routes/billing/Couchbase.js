@@ -88,7 +88,7 @@ exports.getData = function getData(key ,result) {
    myBucket.get(key,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to get data\n");
-	 BlackloudLogger.log(logger, "info", "getData():Failed to get data "+zip);
+	 BlackloudLogger.log(logger, "info", "getData():Failed to get data "+key);
 	 result(err, null);
 	 return;
    }
