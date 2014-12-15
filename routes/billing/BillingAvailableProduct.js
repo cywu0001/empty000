@@ -3,6 +3,9 @@ var dotEnv = require("dotenv");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
 
+var BlackCloudLogger = require("../../utils/BlackloudLogger");
+var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingAvailableProduct");
+
 var google = require('googleapis');
 var androidpublisher = google.androidpublisher('v2');
 var OAuth2 = google.auth.OAuth2;
@@ -30,12 +33,13 @@ var statusCode =
 	} 
 };
 
-var available_product = function(body, response) {
+var available_product_http = function(body, response) {
 	var packageName = body.package_name;
 	var ret;
 
 	if( packageName == null || packageName == '' )
 	{
+    	BlackCloudLogger.log(logger, "error", "Missing parameter: packageName");
 		ret = {
 			status: statusCode['missing'], 
 		}
@@ -56,6 +60,7 @@ var available_product = function(body, response) {
 			{
 				if(err.message.indexOf('Missing') >= 0)
 				{
+    				BlackCloudLogger.log(logger, "error", "Missing parameter");
 					ret = {
 						status: statusCode['missing'], 
 						data: err
@@ -64,6 +69,7 @@ var available_product = function(body, response) {
 				}
 				else
 				{
+    				BlackCloudLogger.log(logger, "error", "Internal server error");
 					ret = {
 						status: statusCode['nodata'], 
 						data: err
@@ -76,7 +82,7 @@ var available_product = function(body, response) {
 			{
 				//console.log(response);
 				var productList = [];
-				response.inappproduct.forEach(function(entry) {
+				res.inappproduct.forEach(function(entry) {
 					productList.push(entry.sku);
 				});
 				var product = {
@@ -85,6 +91,7 @@ var available_product = function(body, response) {
 				};
 				if( productList.length > 0 )
 				{
+    				BlackCloudLogger.log(logger, "error", "Get available product list successfully");
 					ret = {
 						status: statusCode['pass'], 
 						product: product
@@ -93,6 +100,7 @@ var available_product = function(body, response) {
 				}
 				else
 				{
+    				BlackCloudLogger.log(logger, "error", "No available product found");
 					ret = {
 						status: statusCode['nodata']
 					};
@@ -104,4 +112,78 @@ var available_product = function(body, response) {
 		});
 }
 
-exports.get = available_product;
+var available_product_internal = function(name, callback) {
+	var packageName = name;
+	var ret;
+
+	if( packageName == null || packageName == '' )
+	{
+    	BlackCloudLogger.log(logger, "error", "Missing parameter: packageName");
+		ret = {
+			status: statusCode['missing'], 
+		}
+		return;
+	}
+
+	oauth2Client.setCredentials({
+		refresh_token: refreshToken
+	});
+
+	androidpublisher.inappproducts.list({
+		packageName: packageName,
+		auth: oauth2Client
+	}, function(err, res) {
+			if(err)
+			{
+				if(err.message.indexOf('Missing') >= 0)
+				{
+    				BlackCloudLogger.log(logger, "error", "Missing parameter");
+					ret = {
+						status: statusCode['missing'], 
+						data: err
+					}
+				}
+				else
+				{
+    				BlackCloudLogger.log(logger, "error", "Internal server error");
+					ret = {
+						status: statusCode['nodata'], 
+						data: err
+					}
+				}
+			}
+			else
+			{
+				//console.log(response);
+				var productList = [];
+				res.inappproduct.forEach(function(entry) {
+					productList.push(entry.sku);
+				});
+				var product = {
+					package_name: packageName, 
+					product_ID_list: productList
+				};
+				if( productList.length > 0 )
+				{
+    				BlackCloudLogger.log(logger, "error", "Get available product list successfully");
+					ret = {
+						status: statusCode['pass'], 
+						product: product
+					}
+				}
+				else
+				{
+    				BlackCloudLogger.log(logger, "error", "No available product found");
+					ret = {
+						status: statusCode['nodata']
+					};
+				}
+				//console.log(ret);
+			}
+			if( typeof callback == 'function' && callback != null )
+				callback(ret);
+		});
+}
+
+exports.get = available_product_http;
+exports.getAvailableProduct = available_product_internal;

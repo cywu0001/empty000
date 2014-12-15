@@ -2,6 +2,14 @@ var billingPurchasingStat = require('./BillingPurchasingStat'),
 	couchBase = require("./Couchbase");
 	iap = require('in-app-purchase');
 
+var fs = require("fs"),
+	dotEnv = require("dotenv"),
+	file = fs.readFileSync(__dirname + "/.env"),
+	env = dotEnv.parse(file);
+
+var BlackCloudLogger = require("../../utils/BlackloudLogger"),
+	logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingVerifyReceipt");
+
 var statusCode =
 {
 	'apple_pass': {
@@ -40,6 +48,7 @@ var verify_receipt_apple = function(body, response)
 			ret = {
 				status: tmpStatus, 
 			}
+    		BlackCloudLogger.log(logger, "error", "Error on iap setup");
 			response.statusCode = 500;
 			response.send(ret);
 		}
@@ -50,6 +59,7 @@ var verify_receipt_apple = function(body, response)
 				ret = {
 					status: tmpStatus, 
 				}
+    			BlackCloudLogger.log(logger, "error", "Error on apple receipt verification");
 				response.statusCode = 500;
 				response.send(ret);
 			}
@@ -85,6 +95,7 @@ var verify_receipt_apple = function(body, response)
 				ret = {
 					status: statusCode['apple_pass'], 
 				}
+    			BlackCloudLogger.log(logger, "info", "Done verifying apple receipt");
 				response.statusCode = 200;
 				response.send(ret);
 			}
@@ -114,6 +125,7 @@ var verify_receipt_google = function(body, response)
 			ret = {
 				status: tmpStatus, 
 			}
+    		BlackCloudLogger.log(logger, "error", "Error on iap setup");
 			response.statusCode = 500;
 			response.send(ret);
 		}
@@ -124,6 +136,7 @@ var verify_receipt_google = function(body, response)
 				ret = {
 					status: tmpStatus, 
 				}
+    			BlackCloudLogger.log(logger, "error", "Error on google receipt verification");
 				response.statusCode = 500;
 				response.send(ret);
 			}
@@ -158,6 +171,7 @@ var verify_receipt_google = function(body, response)
 					status: statusCode['google_pass'], 
 				}
 				//console.log(res);
+    			BlackCloudLogger.log(logger, "info", "Done verifying google receipt");
 				response.statusCode = 200;
 				response.send(ret);
 			}
