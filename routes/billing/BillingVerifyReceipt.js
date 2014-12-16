@@ -1,6 +1,7 @@
 var billingPurchasingStat = require('./BillingPurchasingStat'),
-	couchBase = require("./Couchbase");
-	iap = require('in-app-purchase');
+	couchBase = require("./Couchbase"),
+	iap = require('in-app-purchase'),
+	request = require('request');
 
 var fs = require("fs"),
 	dotEnv = require("dotenv"),
