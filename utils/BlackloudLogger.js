@@ -37,7 +37,7 @@ function getTimeStamp() {
 	return timeStamp;
 }
 
-var logServerIP = '10.70.1.213';
+var logServerIP = '54.68.219.109';
 var portMap = ({
 	'WEATHER': 8081,
 	'BILLING': 8082,
