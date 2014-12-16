@@ -103,6 +103,49 @@ var verify_receipt_apple = function(body, response)
 	});
 }
 
+var verify_receipt_apple_renew = function(receipt_data, password, callback)
+{
+	var data = {
+		'receipt-data' : receipt_data, 
+		'password'     : password
+	};
+    postData = JSON.stringify(data);
+    request({
+        uri: 'https://' + env.APPLE_VERIFY_SERVER + '/verifyReceipt',
+        method: 'POST',
+        body: postData,
+        headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            //'content-length': postData.length
+        }
+    }, function (err, res, body) {
+		var ret = {
+			status: '',
+			data  : ''
+		};
+        if (!err) {
+            try {
+                body = JSON.parse(body);
+                if (res.statusCode == 200) 
+				{
+					if(body.status == 0)
+						ret.status = statusCode[0];
+					else
+						ret.status = statusCode[1];
+                }
+				ret.data = body;
+            } catch (ex) {
+				console.log(ex);
+            }
+        } else {
+			//console.log(err);
+			ret.status = statusCode[1];
+			ret.data = err;
+        }
+		callback(ret);
+    });
+}
+
 var verify_receipt_google = function(body, response)
 {
 	var	receiptData     = body.receipt_data, 
@@ -193,4 +236,5 @@ function getDateString(date) {
 }
 
 exports.apple  = verify_receipt_apple;
+exports.apple_renew = verify_receipt_apple_renew;
 exports.google = verify_receipt_google;
