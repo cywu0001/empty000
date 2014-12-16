@@ -44,8 +44,8 @@ function receiptDataVerify(req, res, next) {
     }
 }
 
-function passwordVerify(req, res, next) {
-    if(req.body.password == null) {
+function applePasswordVerify(req, res, next) {
+    if(req.body.apple_password == null) {
         BlackCloudLogger.log(logger, "info", "Missing parameter");
         res.statusCode = 400;
         res.end(JSON.stringify(parammiss));
@@ -68,20 +68,8 @@ function packageNameVerify(req, res, next) {
     }
 }
 
-function subscriptionIDVerify(req, res, next) {
-    if(req.body.subscription_ID == null) {
-        BlackCloudLogger.log(logger, "info", "Missing parameter");
-        res.statusCode = 400;
-        res.end(JSON.stringify(parammiss));
-    }
-    else {
-        //How to check it is valid?
-        next(); 
-    }
-}
-
-function purchaseTokenVerify(req, res, next) {
-    if(req.body.purchase_token == null) {
+function signatureVerify(req, res, next) {
+    if(req.body.signature == null) {
         BlackCloudLogger.log(logger, "info", "Missing parameter");
         res.statusCode = 400;
         res.end(JSON.stringify(parammiss));
@@ -169,7 +157,11 @@ router.post("/available_product"
 router.post("/verify_receipt_apple"
             ,tokenVerify
             ,receiptDataVerify
-            ,passwordVerify
+            ,applePasswordVerify
+            ,userIDVerify
+            ,deviceIDVerify
+            ,productIDVerify
+            ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_apple: " + JSON.stringify(req.body));
     billingVerifyReceipt.apple(req.body, res);
@@ -177,9 +169,12 @@ router.post("/verify_receipt_apple"
 
 router.post("/verify_receipt_google"
             ,tokenVerify
+            ,receiptDataVerify
+            ,userIDVerify
+            ,deviceIDVerify
+            ,productIDVerify
             ,packageNameVerify
-            ,subscriptionIDVerify
-            ,purchaseTokenVerify
+            ,signatureVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_google: " + JSON.stringify(req.body));
     billingVerifyReceipt.google(req.body, res);
