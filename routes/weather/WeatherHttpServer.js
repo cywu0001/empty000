@@ -8,7 +8,7 @@ var couchbase = require("./Couchbase");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
 var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new("WEATHER", "WeatherHttpServer");
+var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherHttpServer");
 
 var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
@@ -116,6 +116,12 @@ function readUploadFile(req,res,type)
 	});
 	});
 }
+
+/* GET server version. */
+router.get("/server_version", function(req, res) {
+    res.statusCode = 200;
+    res.end(env.SERVER_VERSION);
+});
 
 /* GET forecast. */
 router.get("/forecastweather", clientAuthentication, parameterCheck, function(req, res) {

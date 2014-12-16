@@ -7,6 +7,7 @@ var env = dotEnv.parse(file);
 var BlackCloudLogger = require("../../utils/BlackloudLogger");
 var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingHttpServer");
 var purchasingStat = require("./BillingPurchasingStat");
+var billingAvailableProduct = require("./BillingAvailableProduct");
 var blackloudTokenVerify = require("./BlackloudTokenVerify");
 var billingPurchaseQuery = require("./BillingPurchaseQuery");
 var billingVerifyReceipt = require("./BillingVerifyReceipt");
@@ -151,13 +152,18 @@ function endDateVerify(req, res, next) {
     }
 }
 
+/* GET server version. */
+router.get("/server_version", function(req, res) {
+    res.statusCode = 200;
+    res.end(env.SERVER_VERSION);
+});
+
 router.post("/available_product"
             ,tokenVerify
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "available_product: " + JSON.stringify(req.body));      
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingAvailableProduct.get(req.body, res);
 });
 
 router.post("/verify_receipt_apple"
@@ -268,7 +274,5 @@ router.post("/enable_trial"
     billingPurchaseQuery.enable_trial(req.body, res);
 
 });
-
-
 
 module.exports = router;
