@@ -10,6 +10,7 @@ var purchasingStat = require("./BillingPurchasingStat");
 var blackloudTokenVerify = require("./BlackloudTokenVerify");
 var billingPurchaseQuery = require("./BillingPurchaseQuery");
 var billingVerifyReceipt = require("./BillingVerifyReceipt");
+var billingRenewPurchasedProduct = require("./BillingRenewPurchasedProduct");
 
 var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
@@ -185,7 +186,7 @@ router.post("/query_purchased_product"
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_product: " + JSON.stringify(req.body));
 
-    billingPurchaseQuery.query_purchased_product(req, res);
+    billingPurchaseQuery.query_purchased_product(req.body, res);
 
 });
 
@@ -195,7 +196,7 @@ router.post("/query_purchased_all_product"
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_all_product: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_all_product(req, res);
+    billingPurchaseQuery.query_purchased_all_product(req.body, res);
 
 });
 
@@ -206,7 +207,7 @@ router.post("/query_purchased_history"
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_history: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_history(req, res);
+    billingPurchaseQuery.query_purchased_history(req.body, res);
 });
 
 router.post("/is_purchasing"
@@ -234,8 +235,7 @@ router.post("/renew_purchased_product"
             ,productIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_product: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingRenewPurchasedProduct.renew_purchased_product(req.body, res);
 });
 
 router.post("/renew_purchased_all_product"
@@ -244,8 +244,7 @@ router.post("/renew_purchased_all_product"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_all_product: " + JSON.stringify(req.body));
-    res.statusCode = 200;
-    res.end("200 OK");
+    billingRenewPurchasedProduct.renew_all_purchased_product(req.body, res);
 });
 
 
@@ -255,7 +254,7 @@ router.post("/is_enable_trial"
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "is_enable_trial: " + JSON.stringify(req.body));
 
-    billingPurchaseQuery.is_enable_trial(req, res);
+    billingPurchaseQuery.is_enable_trial(req.body, res);
 
 });
 
@@ -266,7 +265,7 @@ router.post("/enable_trial"
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "enable_trial: " + JSON.stringify(req.body));
 
-    billingPurchaseQuery.enable_trial(req, res);
+    billingPurchaseQuery.enable_trial(req.body, res);
 
 });
 
