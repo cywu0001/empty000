@@ -27,10 +27,6 @@ var statusCode =
 	}
 };
 
-iap.config({
-	googlePublicKeyPath: './'
-});
-
 var verify_receipt_apple = function(body, response)
 {
 	var	receiptData   = body.receipt_data, 
@@ -68,29 +64,11 @@ var verify_receipt_apple = function(body, response)
 				//console.log(res);
 				// erase purchasing state
 				billingPurchasingStat.cancel(deviceID);
-				// insert data to couchbase db
 				packageName = res.receipt.bid;
 				productID = res.receipt.product_id;
-				var dateObj = getDateString(Number(res.receipt.original_purchase_date_ms));
-				var insertData = {
-					user_ID        : userID, 
-					product        : 
-					{
-						product_list   : 
-						{
-							device_ID      : deviceID, 
-							product_ID     : productID, 
-							start_Date     : dateObj.startDate, 
-							end_Date       : dateObj.endDate, 
-							store          : 'Apple', 
-							receipt_data   : receiptData, 
-							apple_password : applePassword, 
-							package_name   : packageName 
-						}
-					}
-				}
-				couchBase.insertData(userID + '_Purchased_Product', insertData);
-				// insert data to couchbase db  end
+
+				// database access
+				dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(res.receipt.original_purchase_date_ms));
 
 				// prepare return value
 				ret = {
@@ -104,11 +82,11 @@ var verify_receipt_apple = function(body, response)
 	});
 }
 
-var verify_receipt_apple_renew = function(receipt_data, password, callback)
+var verify_receipt_apple_renew = function(receipt_data, callback)
 {
 	var data = {
 		'receipt-data' : receipt_data, 
-		'password'     : password
+		'password'     : env.APPLE_PASSWORD
 	};
     postData = JSON.stringify(data);
     request({
@@ -135,6 +113,7 @@ var verify_receipt_apple_renew = function(receipt_data, password, callback)
 						ret.status = statusCode[1];
                 }
 				ret.data = body;
+    			BlackCloudLogger.log(logger, "info", "Done verifying apple renew receipt");
             } catch (ex) {
 				console.log(ex);
             }
@@ -142,6 +121,7 @@ var verify_receipt_apple_renew = function(receipt_data, password, callback)
 			//console.log(err);
 			ret.status = statusCode[1];
 			ret.data = err;
+    		BlackCloudLogger.log(logger, "error", "Fail on verifying apple renew receipt");
         }
 		callback(ret);
     });
@@ -158,9 +138,13 @@ var verify_receipt_google = function(body, response)
 
 	var ret;
 	var googleReceipt = {
-		"data" : receiptData, 
-		"signature" : googleSignature
+		"data": receiptData, 
+		"signature": googleSignature
 	}
+
+	iap.config({
+		googlePublicKeyPath: env.GOOGLE_PUBLIC_KEY_DIR
+	});
 
 	iap.setup(function(error) {
 		if(error) {
@@ -176,7 +160,7 @@ var verify_receipt_google = function(body, response)
 		iap.validate(iap.GOOGLE, googleReceipt, function(err, res) {
 			if(err) {
 				var tmpStatus = statusCode['fail'];
-				tmpStatus.message += ('. ' + error);
+				tmpStatus.message += ('. ' + err);
 				ret = {
 					status: tmpStatus, 
 				}
@@ -187,30 +171,9 @@ var verify_receipt_google = function(body, response)
 			if(iap.isValidated(res)) {
 				// erase purchasing state
 				billingPurchasingStat.cancel(deviceID);
-				/* insert data to couchbase db */
-				// get date time first
-				var dateObj = getDateString(res.purchaseTime);
-				var insertData = {
-					user_ID        : userID, 
-					product        :
-					{
-						product_list   : 
-						[
-							{
-								device_ID      : deviceID, 
-								product_ID     : productID, 
-								start_Date     : dateObj.startDate, 
-								end_Date       : dateObj.endDate, 
-								store          : 'Google', 
-								receipt_data   : receiptData, 
-								package_name   : packageName 
-							}
-						]
-					}
-				}
-				couchBase.insertData(userID + '_Purchased_Product', insertData);
-				/* insert data to couchbase db   end */
-
+				// database access
+				dbUpdate(userID, deviceID, productID, 'Google', receiptData, packageName, res.purchaseTime);
+			
 				ret = {
 					status: statusCode['google_pass'], 
 				}
@@ -234,6 +197,60 @@ function getDateString(date) {
 		endDate  : eDateString
 	}
 	return ret;
+}
+
+function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, purchaseTime)
+{
+	// get date time first
+	var dateObj = getDateString(purchaseTime);
+	/* insert data to purchased product */
+	var purchasedProduct = {
+		user_ID        : userID, 
+		product        :
+		{
+			product_list   : 
+			[
+				{
+					device_ID      : deviceID, 
+					product_ID     : productID, 
+					start_Date     : dateObj.startDate, 
+					end_Date       : dateObj.endDate, 
+					store          : store, 
+					receipt_data   : receiptData, 
+					package_name   : packageName 
+				}
+			]
+		}
+	}
+	//console.log(purchasedProduct);
+	couchBase.insertData(userID + '_Purchased_Product', purchasedProduct);
+	/* insert data to purchased product   end */	
+
+	/* insert data to purchased history */
+	var purchasedHistory = {
+		user_ID        : userID, 
+		product        :
+		{
+			product_history   : 
+			[
+				{
+					device_ID      : deviceID, 
+					product        :
+					[
+						{
+							product_ID     : productID, 
+							start_Date     : dateObj.startDate, 
+							end_Date       : dateObj.endDate, 
+							store          : store,
+							package_name   : packageName
+						}
+					]
+				}
+			]
+		}
+	}
+	couchBase.insertData(userID + '_Purchased_History', purchasedHistory);
+	/* insert data to purchased history   end */	
 }
 
 exports.apple  = verify_receipt_apple;
