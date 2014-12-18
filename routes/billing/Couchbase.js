@@ -51,6 +51,399 @@ exports.insertData = function insertData(key,w_data ,result) {
  });
 }
 
+function parseJson(json,result) {
+//console.log(JSON.stringify(json));
+var datajson = JSON.parse(JSON.stringify(json));
+var user_ID = datajson["user_ID"];
+var device_ID;
+var product_ID;
+var receipt_data;
+var start_Date;
+var end_Date;
+var store;
+var ProductArray = [];
+var DeviceArray = [];
+if (datajson["product"]["product_list"].length > 0) {
+	for(var i=0; i<datajson["product"]["product_list"].length; i++) 
+	{
+		device_ID = datajson["product"]["product_list"][i]["device_ID"]
+		product_ID = datajson["product"]["product_list"][i]["product_ID"]
+		start_Date = datajson["product"]["product_list"][i]["start_Date"]
+		end_Date = datajson["product"]["product_list"][i]["end_Date"]
+		store = datajson["product"]["product_list"][i]["store"]
+		receipt_data = datajson["product"]["product_list"][i]["receipt_data"]
+		var PurchaseObj;
+		PurchaseObj = {
+			user_ID : user_ID,
+			device_ID : device_ID,
+			product_ID : product_ID,
+			receipt_data : receipt_data
+		}
+		//console.log(JSON.stringify(PurchaseObj));
+		var TrialObj;
+		TrialObj = {
+			Trial: [
+				{
+					device_ID : device_ID,
+					user_ID : user_ID,
+					is_enabled_trial : "0"
+				}
+			]
+		};
+		//console.log(JSON.stringify(TrialObj));
+		var ProductObj;
+		ProductObj = {
+			product_ID : product_ID,
+			start_Date : start_Date,
+			end_Date : end_Date,
+			store : store
+                };
+		ProductArray.push(ProductObj);	
+		//console.log(JSON.stringify(ProductArray));
+
+		var DeviceObj;
+		DeviceObj = {
+			device_ID : device_ID,
+			product : [
+				ProductObj
+			]		
+                };
+		DeviceArray.push(DeviceObj);
+	}			
+}
+
+var HistoryObj;
+HistoryObj = {
+	user_ID : user_ID,
+	product : {
+		product_history :
+			DeviceArray
+	}			
+};
+console.log(JSON.stringify(HistoryObj));
+
+}
+
+function loadData(key ,result) {
+ 
+ // Get the data in Couchbase using the get method ()
+   var cb = new couchbase.Cluster(couchbaseserver);
+   var myBucket = cb.openBucket(bucketfd);
+   myBucket.get(key,function(err,data) {
+   if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+     console.log("Failed to load data\n");
+	 BlackloudLogger.log(logger, "info", "loadData():Failed to load data "+key);
+	 result(err, null);
+	 return;
+   }
+   var out_json = JSON.parse(data.value);
+   result(err, JSON.stringify(out_json));
+   myBucket.disconnect();
+ });
+}
+
+
+function saveData(key,w_data ,result) {
+ console.log("saveData....\n");
+ // Insert the data in Couchbase using the add method ()
+   var cb = new couchbase.Cluster(couchbaseserver);
+   var myBucket = cb.openBucket(bucketfd);
+   myBucket.insert(key, JSON.stringify(w_data), function(err,data) {
+   if (err && err != 12) { // 12 : LCB_KEY_EEXISTS 
+        console.log("Failed to save data\n");
+    	myBucket.replace(key, JSON.stringify(w_data), function(err,data){
+			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
+				console.log("Failed to replace data\n");
+				BlackloudLogger.log(logger, "info", "saveData():Failed to replace data "+key);
+				result(err, null);
+			}else
+			{
+				console.log("Replace data success\n");
+				result(success, null);
+			}			
+		    myBucket.disconnect();
+
+		});
+   }else
+   {
+	  console.log("save data success\n");	  
+   	  result(success, null);
+	  myBucket.disconnect();
+   }
+ });
+}
+
+function createHistoryData(parameter,result) {
+
+	var ProductObj;
+	ProductObj = {
+		product_ID : parameter.product_ID,
+		start_Date : parameter.start_Date,
+		end_Date : parameter.end_Date,
+		store : parameter.store
+        };
+
+	var DeviceObj;
+	DeviceObj = {
+		device_ID : parameter.device_ID,
+		product : [
+			ProductObj
+		]		
+        };
+	var HistoryObj;
+	HistoryObj = {
+		user_ID : parameter.user_ID,
+		product : {
+			product_history : [
+				DeviceObj
+			]
+		}			
+	};
+	saveData(parameter.user_ID+"_Purchased_History",HistoryObj ,function(err) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to create History data\n");
+	}
+	});
+}
+
+function filter_device_ID(data,value,result){
+
+	var check =false;
+	data.forEach(function(val,idx) {
+		if(val["device_ID"] == value)
+		{
+			check = true
+			return;
+		}
+	});
+
+	result(check,null);
+}
+
+function updateHistoryData(data,parameter,result) {
+	var datajson = JSON.parse((data));
+	var product_history = [];
+	var device_ID;
+	var user_ID;
+	var deviceObj;
+	var productObj;
+	var check;
+	user_ID = datajson["user_ID"];
+
+	filter_device_ID(datajson["product"]["product_history"],parameter.device_ID,function(err) {
+		console.log(err);
+		check = err;
+	});
+
+
+	if(check == false)
+	{
+		datajson["product"]["product_history"].forEach(function(val,idx) {		
+			console.log("No find the same device_ID");
+			//console.log(JSON.stringify(val));
+			product_history.push(val);
+
+			productObj = {
+				product_ID : parameter.product_ID,
+				start_Date : parameter.start_Date,
+				end_Date : parameter.end_Date,
+				store : parameter.store
+			};
+			var historyObj = {
+				device_ID : parameter.device_ID,
+				product : [
+					productObj
+				]
+			}
+			product_history.push(historyObj);
+		});
+	}else
+	{
+		datajson["product"]["product_history"].forEach(function(val,idx) {		
+			if(val["device_ID"] == parameter.device_ID)
+			{
+				console.log("find the same device_ID");
+				//console.log(JSON.stringify(val));
+				//console.log(idx);
+				productObj = {
+					product_ID : parameter.product_ID,
+					start_Date : parameter.start_Date,
+					end_Date : parameter.end_Date,
+					store : parameter.store
+				};
+				val["product"].push(productObj);
+				deviceObj = {
+					device_ID : parameter.device_ID,
+					product : val["product"]
+				};
+				product_history.push(deviceObj);	
+			}else
+			{
+				//console.log("No find the same device_ID");
+				//console.log(JSON.stringify(val));
+				product_history.push(val);		
+			}
+		
+		});
+	}
+	console.log(product_history);	
+	var purchased_HistoryObj;
+	purchased_HistoryObj = {
+		user_ID : user_ID,
+		product : {
+			product_history :
+				product_history
+		}			
+	};
+	console.log(JSON.stringify(purchased_HistoryObj));
+
+	saveData(parameter.user_ID+"_Purchased_History",purchased_HistoryObj ,function(err) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to save data\n");
+	}
+	});
+}
+
+function createPurchasedData(parameter,result) {
+
+	var ProductObj;
+	ProductObj = {
+		device_ID : parameter.device_ID,
+		product_ID : parameter.product_ID,
+		start_Date : parameter.start_Date,
+		end_Date : parameter.end_Date,
+		store : parameter.store,
+		receipt_data : parameter.receipt_data,
+		package_name : parameter.package_name
+        };
+
+	var PurchasedObj;
+	PurchasedObj = {
+		user_ID : parameter.user_ID,
+		product : {
+			product_list : [
+				ProductObj
+			]
+		}			
+	};
+	saveData(parameter.user_ID+"_Purchased_Product",PurchasedObj ,function(err) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to create Purchased Product data\n");
+	}
+	});
+}
+
+
+function updatePurchasedData(data,parameter,result) {
+	var datajson = JSON.parse((data));
+	var purchased_Product = [];
+	var device_ID;
+	var user_ID;
+	var deviceObj;
+	var productObj;
+	var check;
+	user_ID = datajson["user_ID"];
+
+	filter_device_ID(datajson["product"]["product_list"],parameter.device_ID,function(err) {
+		console.log(err);
+		check = err;
+	});
+
+
+	if(check == false)
+	{
+		datajson["product"]["product_list"].forEach(function(val,idx) {		
+			console.log("No find the same device_ID");
+			//console.log(JSON.stringify(val));
+			purchased_Product.push(val);
+
+			productObj = {
+				device_ID : parameter.device_ID,
+				product_ID : parameter.product_ID,
+				start_Date : parameter.start_Date,
+				end_Date : parameter.end_Date,
+				store : parameter.store,
+				receipt_data : parameter.receipt_data,
+				package_name : parameter.package_name
+			};
+			purchased_Product.push(productObj);
+		});
+	}else
+	{
+		datajson["product"]["product_list"].forEach(function(val,idx) {		
+			if(val["device_ID"] == parameter.device_ID)
+			{
+				console.log("find the same device_ID");
+				//console.log(JSON.stringify(val));
+				//console.log(idx);
+				productObj = {
+					device_ID : parameter.device_ID,
+					product_ID : parameter.product_ID,
+					start_Date : parameter.start_Date,
+					end_Date : parameter.end_Date,
+					store : parameter.store,
+					receipt_data : parameter.receipt_data,
+					package_name : parameter.package_name
+				};
+				purchased_Product.push(productObj);	
+			}else
+			{
+				//console.log("No find the same device_ID");
+				//console.log(JSON.stringify(val));
+				purchased_Product.push(val);		
+			}
+		
+		});
+	}
+	console.log(purchased_Product);	
+	var purchased_Obj;
+	purchased_Obj = {
+		user_ID : user_ID,
+		product : {
+			product_list :
+				purchased_Product
+		}			
+	};
+	console.log(JSON.stringify(purchased_Obj));
+
+	saveData(parameter.user_ID+"_Purchased_Product",purchased_Obj ,function(err) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to save data\n");
+	}
+	});
+}
+
+exports.insertHistoryData = function insertPurchasedData(parameter,result) {
+ 	console.log("insertHistoryData....\n");
+
+	loadData(parameter.user_ID+"_Purchased_History",function(err,data) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to insert history data\n");
+	     createHistoryData(parameter,result);
+	}else
+	{
+	     console.log("Successed to insert history data\n");
+	     updateHistoryData(data,parameter,result);
+	}
+	});
+}
+
+
+exports.insertPurchasedData = function insertPurchasedData(parameter,result) {
+ 	console.log("insertHistoryData....\n");
+
+	loadData(parameter.user_ID+"_Purchased_Product",function(err,data) {
+	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+	     console.log("Failed to insert Purchased data\n");
+	     createPurchasedData(parameter,result);
+	}else
+	{
+	     console.log("Successed to insert Purchased data\n");
+	     updatePurchasedData(data,parameter,result);
+	}
+	});
+}
+
 exports.replaceData = function replaceData(key,w_data ,result) {
  console.log("replaceData....\n");
  // Insert the data in Couchbase using the add method ()

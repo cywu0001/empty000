@@ -61,15 +61,32 @@ var status = {
 //couchbase.setView(); 
 //couchbase.getZIP(result);
 //couchbase.flushBucket(result);
-couchbase.getData('1000',result);
+//couchbase.getData('1000',result);
+
+var parameterObj;
+parameterObj = {
+	user_ID : "Will",
+	device_ID : "2222",
+	product_ID : "3333",
+	start_Date : "2014/12/12",
+	end_Date : "2014/12/31",
+	store : ""
+};
+
+couchbase.insertHistoryData(parameterObj,result);
 /*
-couchbase.getBucket().get('10001_current',function(err,data) {
-if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
-     console.log("Failed to get data\n");
-	 console.log(data.value);
-}else
-     console.log("Successed to get data\n");
-	 console.log(data.value);
-});
+var parameterObj;
+parameterObj = {
+	user_ID : "Will",
+	device_ID : "2222",
+	product_ID : "1111",
+	start_Date : "2014/12/12",
+	end_Date : "2015/1/31",
+	store : "",
+	receipt_data : "qwertyuiop",
+	package_name : "com.test.testsample"
+};
+
+couchbase.insertPurchasedData(parameterObj,result);
 */
 
