@@ -38,7 +38,7 @@ var status = {
 //couchbase.flushBucket(result);
 //couchbase.getData('abc_Purchased_Product',result);
 
-
+//couchbase.deleteData('102',result);
 //couchbase.setBillingView(); 
 //couchbase.getUser_ID(result);
 

@@ -418,6 +418,23 @@ exports.getData = function getData(key ,result) {
  });
 }
 
+exports.deleteData = function deleteData(key ,result) {
+ 
+ // delete the data in Couchbase using the remove method ()
+   var cb = new couchbase.Cluster(couchbaseserver);
+   var myBucket = cb.openBucket(bucketfd);
+   myBucket.remove(key,function(err) {
+   if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
+     console.log("Failed to remove data\n");
+	 BlackloudLogger.log(logger, "info", "deleteData():Failed to remove data "+key);
+	 result(err, null);
+	 return;
+   }
+   result(err, null);
+   myBucket.disconnect();
+ });
+}
+
 exports.flushBucket = function flushBucket(result) {
  
    var cb = new couchbase.Cluster(couchbaseserver);
