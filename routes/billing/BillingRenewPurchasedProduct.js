@@ -15,19 +15,9 @@ var redirectURL  = env.REDIRECT_URL;
 var code         = env.CODE;
 var refreshToken = env.REFRESH_TOKEN;
 var oauth2Client = new OAuth2(clientID, clientSecret, redirectURL);
+var request = require('request');
 
-
-var couchbase_result = function (err, data) {
-        console.log("callback function:result\n");
-    if (err)
-        {
-                console.log("get some error:\n",err);
-        }
-        if(data)
-        {
-        console.log(data);
-        }
-};
+var apple_password = '4a2669c2b8e148a3907d4b8047bedba0';
 
 var statusCode =
 {
@@ -58,134 +48,445 @@ var statusCode =
         'fail':{
                 code: 1414,
                 message: 'Fail to renew purchasing'
+        },
+	'apple_pass': {
+                code: 1212,
+                message: 'Verify Apple receipt success'
         }
+	
 };
 
-
-var renew_purchased_product = function(body, response)
+var renew_purchased_product = function(body, res)
 {
+	var userId = body.user_ID;
+	var deviceId = body.device_ID;
+	var token =body.token;
+	var productId;
+	var ret;
 
-	var access_token = body.access_token;
-        var packageName = body.package_name;
-	var subscriptionId = body.subscriptionId;
-	var token = body.token;
-        var ret;
+	if( userId == '' || deviceId == '' || token == '')
+        {
+                ret = {
+                        status: statusCode['missing'],
+                }
+                res.statusCode = 400;
+                res.send(ret);
+                return;
+        }
 
-        oauth2Client.setCredentials({
-                token: access_token,
-                refresh_token: refreshToken
-        });
+	var receiptData;
+	var receiptDataobj;
+	var startTime;
+	var endTime;
+	
+	var store;
 
+	var extendValidStartDay;
+	var extendValidEndDay;	
 
-	androidpublisher.purchases.subscriptions.get({
-		packageName: packageName,
-		subscriptionId:subscriptionId,
-		token:token,
-		auth: oauth2Client
-	},function(err,res){
-
-		if(err)
+	var autoRenewing;
+	var DB_info;
+	//+ get endTime & receiptData(including "packageName" "productId" "purchaseToken")
+	couchbase.getData('Owen3', 
+		function(err,data)
 		{
-			console.log(err);
-		
-			if(err.message.indexOf('Missing') >= 0)
+			if (err)
                         {
-                                ret = {
-                                        status: statusCode['missing'],
-                                        data: err
-                                }
-				response.statusCode = 400;
+                                console.log("get some error:\n",err);
+				return;
                         }
-                        else
+			
+			if(data)
                         {
-                                ret = {
-                                        status: statusCode['nodata'],
-                                        data: err
+				DB_info = data
+                                var dataobj = JSON.parse(data);
+                                for (var i in dataobj["product"]["product_list"])
+                                {
+                                        if( deviceId == dataobj["product"]["product_list"][i]["device_ID"])
+                                        {
+						store = dataobj["product"]["product_list"][i]["store"];
+						if(store == 'Google')
+						{
+                                                	receiptData = dataobj["product"]["product_list"][i]["receipt_data"];
+                                                	receiptDataobj = JSON.parse(receiptData);
+						
+							startTime = dataobj["product"]["product_list"][i]["start_Date"];
+							endTime = dataobj["product"]["product_list"][i]["end_Date"];
+							console.log('google store');
+						}
+						else //apple
+						{
+							receiptData = dataobj["product"]["product_list"][i]["receipt_data"];
+							startTime = dataobj["product"]["product_list"][i]["start_Date"];
+                                                        endTime = dataobj["product"]["product_list"][i]["end_Date"];
+							productId = dataobj["product"]["product_list"][i]["product_ID"];
+							console.log('Apple store');
+						}
+                                        }
                                 }
-				response.statusCode = 500;
+	//~ get endTime & receiptData(including "packageName" "productId" "purchaseToken")
+			
+				if(store == 'Google')
+				{
+					console.log("Owen_test google process!");
+	//+ google Auth process	and renew access token
+					oauth2Client.setCredentials({
+                				refresh_token: refreshToken
+        				});
+	//~ google Auth process and renew access token
+	
+	//+ get product valid time info
+					androidpublisher.purchases.subscriptions.get({
+                				packageName: receiptDataobj["packageName"],
+                				subscriptionId: receiptDataobj["productId"],
+                				token:receiptDataobj["purchaseToken"],
+                				auth: oauth2Client},
+        					function(err,data){
+							console.log(data);
+                                        		autoRenewing = data["autoRenewing"];
+
+							if(autoRenewing)
+							{
+								extendValidStartDay = new Date(startTime);
+								extendValidStartDay.setTime(extendValidStartDay.getTime() + (30 * 24 * 60 * 60 * 1000));
+//								console.log(extendValidStartDay.toJSON());
+								
+								extendValidEndDay = new Date(endTime);
+								extendValidEndDay.setTime(extendValidEndDay.getTime() + (30 * 24 * 60 * 60 * 1000));
+//								console.log(extendValidEndDay.toJSON());
+
+								//console.log(DB_info);
+								var dataobj = JSON.parse(DB_info);
+								console.log(dataobj);
+								
+								for (var i in dataobj["product"]["product_list"])
+                                				{
+                                        				if( deviceId == dataobj["product"]["product_list"][i]["device_ID"])
+                                        				{
+                                                				dataobj["product"]["product_list"][i]["start_Date"] = extendValidStartDay;
+										dataobj["product"]["product_list"][i]["end_Date"] = extendValidEndDay;
+										couchbase.insertData('Owen3', dataobj,
+                                						function(err,data){console.log("Owen_test insert!");});
+                                        				}
+                                				}
+
+							}
+        					});
+	//~ get product valid time info
+				}
+				else//apple
+				{
+					console.log("Owen_test apple process!");
+					//console.log(receiptData);
+					//console.log(apple_password);
+					var data = {
+						'receipt-data' : receiptData,
+                				'password'     : apple_password
+					}
+					var postData = JSON.stringify(data);
+					request({
+        					uri: 'https://sandbox.itunes.apple.com/verifyReceipt',
+        					method: 'POST',
+        					body: postData,
+        					headers: {
+            						'content-type': 'application/x-www-form-urlencoded'
+            						//'content-length': postData.length
+       						}}, function (err, res, body) {
+                					var ret = {
+                        					status: '',
+                        					data  : ''
+                					};
+        						if (!err) {
+            							try {
+									//Owen_test
+									//console.log(body);
+                							body = JSON.parse(body);
+									//console.log(body);
+									var validTimeStart;
+									var validTimeEnd;
+									
+									
+									
+									for(var i in body["latest_receipt_info"])
+									{
+										if(productId == body["latest_receipt_info"][i]["product_id"])
+										{
+											validTimeStart = body["latest_receipt_info"][i]["purchase_date_ms"];
+											validTimeEnd = body["latest_receipt_info"][i]["expires_date_ms"];
+										}
+//										console.log(validTime);
+									}
+									
+									extendValidStartDay = new Date(parseInt(validTimeStart));
+									//console.log("Owen_test Apple Start: "+extendValidStartDay.toJSON());
+
+									extendValidEndDay = new Date(parseInt(validTimeEnd));
+									//console.log("Owen_test Apple end: "+extendValidEndDay.toJSON());
+
+									for (var i in dataobj["product"]["product_list"])
+                                    {
+                                       	if( deviceId == dataobj["product"]["product_list"][i]["device_ID"])
+                                       	{
+                                           	dataobj["product"]["product_list"][i]["start_Date"] = extendValidStartDay;
+                                           	dataobj["product"]["product_list"][i]["end_Date"] = extendValidEndDay;
+																					
+											couchbase.insertData('Owen3', dataobj,
+											function(err,data){console.log("Owen_test insert!");});
+                                        }
+                                    }
+
+                							if (res.statusCode == 200)
+                                					{
+                                        					if(body.status == 0)
+                                                					ret.status = statusCode[0];
+                                        					else
+                                                					ret.status = statusCode[1];
+                							}
+                                					ret.data = body;
+            							} catch (ex) {
+                                					console.log(ex);
+            							}
+        						} else {
+                        					//console.log(err);
+                        					ret.status = statusCode[1];
+                        					ret.data = err;
+        						}
+    						}
+					);
+				}
                         }
-		}
-		else
-		{
-			response = {
-				"kind": res.kind,
-				"startTimeMillis": res.startTimeMillis,
-				"expiryTimeMillis": res.expiryTimeMillis,
-				"autoRenewing": res.autoRenewing,
-				"status": statusCode['pass'], 
-                        	"statusCode" : 200
+			else
+			{
+				ret = {
+                        		status: statusCode['nodata'],
+                		}
+                		res.statusCode = 500;
+                		res.send(ret);
+                		return;
 			}
 
-                       	couchbase.insertData('Owen_test',response,couchbase_result);
-			console.log(response);
-		}
+		});
 
-	});
-
+	//console.log(receiptDataobj["purchaseToken"]);	
+	console.log("Owen_test renew_purchased_product1\n userId = "+userId+"\n deviceId = "+deviceId+"\n token = "+token);
 }
-exports.get = renew_purchased_product;
+
+exports.renew = renew_purchased_product;
 
 var renew_all_purchased_product = function(body, response)
 {
-	var access_token = body.access_token;
-        var packageName = body.package_name;
-        var subscriptionId = body.subscriptionId;
-        var token = body.token;
-        var ret;
+/*	var userId = body.user_ID;
+	var packageName = body.package_Name;
+	var token =body.token;
+	var productId;
+	var ret;
+
+	if( userId == '' || packageName == '' || token == '')
+        {
+                ret = {
+                        status: statusCode['missing'],
+                }
+                res.statusCode = 400;
+                res.send(ret);
+                return;
+        }
+
+	var receiptData;
+	var receiptDataobj;
+	var startTime;
+	var endTime;
 	
-        oauth2Client.setCredentials({
-                token: access_token,
-                refresh_token: refreshToken
-        });
+	var store;
 
-	for(var i in body.deviceID)
-	{
+	var extendValidStartDay;
+	var extendValidEndDay;	
 
-		androidpublisher.purchases.subscriptions.get({
-                	packageName: packageName,
-                	subscriptionId:subscriptionId,
-                	token:token,
-                	auth: oauth2Client
-        	},function(err,res){
-			if(err)
-                	{
-                        	console.log(err);
+	var autoRenewing;
+	var dataobj;
+	//	var DB_info;
+	//+ get endTime & receiptData(including "packageName" "productId" "purchaseToken")
+	couchbase.getData('Owen3', 
+		function(err,data)
+		{
+			if (err){
+				console.log("get some error:\n",err);
+				return;
+            }
+			
+			if(data)
+            {
+//				DB_info = data
+                dataobj = JSON.parse(data);
+                for (var i in dataobj["product"]["product_list"])
+                {
+					console.log("Owen_debug 1-"+i);
+                    if( packageName == dataobj["product"]["product_list"][i]["package_name"])
+                    {
+						store = dataobj["product"]["product_list"][i]["store"];
+						if(store == 'Google')
+						{
+                           	receiptData = dataobj["product"]["product_list"][i]["receipt_data"];
+                           	receiptDataobj = JSON.parse(receiptData);
+						
+							startTime = dataobj["product"]["product_list"][i]["start_Date"];
+							endTime = dataobj["product"]["product_list"][i]["end_Date"];
+							console.log('google store');
+						}
+						else //apple
+						{
+							receiptData = dataobj["product"]["product_list"][i]["receipt_data"];
+							startTime = dataobj["product"]["product_list"][i]["start_Date"];
+                            endTime = dataobj["product"]["product_list"][i]["end_Date"];
+							productId = dataobj["product"]["product_list"][i]["product_ID"];
+							console.log('Apple store');
+						}
+                    }
+                
+	//~ get endTime & receiptData(including "packageName" "productId" "purchaseToken")
+			
+					if(store == 'Google')
+					{
+						console.log("Owen_test google process!");
+	//+ google Auth process	and renew access token
+						oauth2Client.setCredentials({
+                				refresh_token: refreshToken
+        				});
+	//~ google Auth process and renew access token
+	
+	//+ get product valid time info
+						androidpublisher.purchases.subscriptions.get({
+                				packageName: receiptDataobj["packageName"],
+                				subscriptionId: receiptDataobj["productId"],
+                				token:receiptDataobj["purchaseToken"],
+                				auth: oauth2Client},
+        					function(err,data){
+							console.log(data);
+                                        		autoRenewing = data["autoRenewing"];
 
-                        	if(err.message.indexOf('Missing') >= 0)
-                       		{
-                                	ret = {
-                                        	status: statusCode['missing'],
-                                        	data: err
-                                	}
-                                	response.statusCode = 400;
-                        	}
-                        	else
-                        	{
-                                	ret = {
-                                        	status: statusCode['nodata'],
-                                        	data: err
-                                	}
-                                	response.statusCode = 500;
-                        	}
-                	}
+							if(autoRenewing)
+							{
+								extendValidStartDay = new Date(startTime);
+								extendValidStartDay.setTime(extendValidStartDay.getTime() + (30 * 24 * 60 * 60 * 1000));
+//								console.log(extendValidStartDay.toJSON());
+								
+								extendValidEndDay = new Date(endTime);
+								extendValidEndDay.setTime(extendValidEndDay.getTime() + (30 * 24 * 60 * 60 * 1000));
+//								console.log(extendValidEndDay.toJSON());
+
+								//console.log(DB_info);
+//								var dataobj = JSON.parse(DB_info);
+//								console.log(dataobj);
+								
+//								for (var i in dataobj["product"]["product_list"])
+//                                				{
+//                                        				if( deviceId == dataobj["product"]["product_list"][i]["device_ID"])
+//                                        				{
+                   				dataobj["product"]["product_list"][i]["start_Date"] = extendValidStartDay;
+								dataobj["product"]["product_list"][i]["end_Date"] = extendValidEndDay;
+//										couchbase.insertData('Owen3', dataobj,
+//                                						function(err,data){console.log("Owen_test insert!");});
+//                                        				}
+//                                				}
+
+							}
+        					});
+	//~ get product valid time info
+					}
+					else//apple
+					{
+						console.log("Owen_test apple process!");
+						//console.log(receiptData);
+						//console.log(apple_password);
+						console.log("Owen_debug 1");
+						var data = {
+							'receipt-data' : receiptData,
+                			'password'     : apple_password
+						}
+						var postData = JSON.stringify(data);
+						request({
+							uri: 'https://sandbox.itunes.apple.com/verifyReceipt',
+							method: 'POST',
+        					body: postData,
+        					headers: {
+            					'content-type': 'application/x-www-form-urlencoded'
+            						//'content-length': postData.length
+       						}}, function (err, res, body) {
+                					var ret = {
+                        					status: '',
+                        					data  : ''
+                					};
+        						if (!err) {
+            							try {
+									//Owen_test
+									//console.log(body);
+                					body = JSON.parse(body);
+									//console.log(body);
+									var validTimeStart;
+									var validTimeEnd;
+									console.log("Owen_debug 2");
+									for(var j in body["latest_receipt_info"])
+									{
+										if(productId == body["latest_receipt_info"][j]["product_id"])
+										{
+											validTimeStart = body["latest_receipt_info"][j]["purchase_date_ms"];
+											validTimeEnd = body["latest_receipt_info"][j]["expires_date_ms"];
+										}
+//										console.log(validTime);
+									}
+									
+									extendValidStartDay = new Date(parseInt(validTimeStart));
+									//console.log("Owen_test Apple Start: "+extendValidStartDay.toJSON());
+
+									extendValidEndDay = new Date(parseInt(validTimeEnd));
+									//console.log("Owen_test Apple end: "+extendValidEndDay.toJSON());
+
+									//for (var i in dataobj["product"]["product_list"])
+                                    //{
+                                    //   	if( deviceId == dataobj["product"]["product_list"][i]["device_ID"])
+                                    //   	{
+                                           	dataobj["product"]["product_list"][i]["start_Date"] = extendValidStartDay;
+                                           	dataobj["product"]["product_list"][i]["end_Date"] = extendValidEndDay;
+											console.log("Owen_debug 3");
+//											couchbase.insertData('Owen3', dataobj,
+//                                							function(err,data){console.log("Owen_test insert!");});
+                                    //	}
+                                    //}
+
+                							if (res.statusCode == 200)
+                                					{
+                                        					if(body.status == 0)
+                                                					ret.status = statusCode[0];
+                                        					else
+                                                					ret.status = statusCode[1];
+                							}
+                                					ret.data = body;
+            							} catch (ex) {
+                                					console.log(ex);
+            							}
+        						} else {
+                        					console.log(err);
+                        					ret.status = statusCode[1];
+                        					ret.data = err;
+        						}
+    						}
+						);
+					}
+                }
+				console.log("Owen_debug 4 i = "+i);
+				//couchbase.insertData('Owen3', dataobj,function(err,data){console.log("Owen_test insert!");});
+				}
 			else
-                	{
-                        	response = {
-					"userID" : body.userid,
-					"deviceID" : body.deviceid,
-                                	"kind": res.kind,
-                                	"startTimeMillis": res.startTimeMillis,
-                                	"expiryTimeMillis": res.expiryTimeMillis,
-                                	"autoRenewing": res.autoRenewing,
-                                	"status": statusCode['pass'],
-                                	"statusCode" : 200
-                       		}
-
-                        	couchbase.insertData('Owen_test',response,couchbase_result);
-                        	console.log(response);
-                	}
+			{
+				ret = {
+                        		status: statusCode['nodata'],
+                		}
+                		res.statusCode = 500;
+                		res.send(ret);
+                		return;
+			}
 		});
-	}
-		
+
+	//console.log(receiptDataobj["purchaseToken"]);	
+	console.log("Owen_test renew_purchased_product1\n userId = "+userId+"\n"+"token = "+token+"package_name = "+packageName);*/
 }
-exports.allget = renew_purchased_product;
+exports.renewall = renew_all_purchased_product;
