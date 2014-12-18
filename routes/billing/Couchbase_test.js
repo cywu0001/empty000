@@ -9,25 +9,8 @@ var result = function (err, data) {
 	}
 	if(data)
 	{
-    	console.log(data);
+ 		console.log("data:"+JSON.stringify(data));
 	}
-};
-
- var tmp = {
-  "data": {
-    "current_condition": [
-      {
-        "precipMM": "1.2",
-        "temp_C": "13",
-        "weatherCode": "176",
-        "weatherDesc": [
-          {
-            "value": "Patchy rain nearby"
-          }
-        ]
-      }
-    ]
-  }
 };
 
 
@@ -47,22 +30,19 @@ var status = {
   "salary": 5000
  };
 
-//var json = JSON.parse(JSON.stringify(status));
-//console.log(emps);
-//var out = objectMerge(status,tmp);
-//var out = [];
-//out.push(status);
-//out.push(tmp);
-//console.log(out);
-//status = merge(status,tmp);
-//console.log(status);
+
 //couchbase.insertData('102',emps,result);
-//couchbase.insertData('102',emps,result);
-//couchbase.setView(); 
+
+//couchbase.setWeatherView(); 
 //couchbase.getZIP(result);
 //couchbase.flushBucket(result);
-//couchbase.getData('1000',result);
+//couchbase.getData('abc_Purchased_Product',result);
 
+
+//couchbase.setBillingView(); 
+//couchbase.getUser_ID(result);
+
+/*
 var parameterObj;
 parameterObj = {
 	user_ID : "Will",
@@ -74,6 +54,7 @@ parameterObj = {
 };
 
 couchbase.insertHistoryData(parameterObj,result);
+*/
 /*
 var parameterObj;
 parameterObj = {

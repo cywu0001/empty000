@@ -13,13 +13,6 @@ var couchbaseserver = env.COUCHBASE_SERVER;
 var c_couchbase = env.C_COUCHBASE;
 var success = 0;
 
-var response_data = {
-	"status" :
-	{
-	"code": 1200,
-	"message": "Command succeeded"
-	},
-};
 
 exports.insertData = function insertData(key,w_data ,result) {
  console.log("insertData....\n");
@@ -51,79 +44,6 @@ exports.insertData = function insertData(key,w_data ,result) {
  });
 }
 
-function parseJson(json,result) {
-//console.log(JSON.stringify(json));
-var datajson = JSON.parse(JSON.stringify(json));
-var user_ID = datajson["user_ID"];
-var device_ID;
-var product_ID;
-var receipt_data;
-var start_Date;
-var end_Date;
-var store;
-var ProductArray = [];
-var DeviceArray = [];
-if (datajson["product"]["product_list"].length > 0) {
-	for(var i=0; i<datajson["product"]["product_list"].length; i++) 
-	{
-		device_ID = datajson["product"]["product_list"][i]["device_ID"]
-		product_ID = datajson["product"]["product_list"][i]["product_ID"]
-		start_Date = datajson["product"]["product_list"][i]["start_Date"]
-		end_Date = datajson["product"]["product_list"][i]["end_Date"]
-		store = datajson["product"]["product_list"][i]["store"]
-		receipt_data = datajson["product"]["product_list"][i]["receipt_data"]
-		var PurchaseObj;
-		PurchaseObj = {
-			user_ID : user_ID,
-			device_ID : device_ID,
-			product_ID : product_ID,
-			receipt_data : receipt_data
-		}
-		//console.log(JSON.stringify(PurchaseObj));
-		var TrialObj;
-		TrialObj = {
-			Trial: [
-				{
-					device_ID : device_ID,
-					user_ID : user_ID,
-					is_enabled_trial : "0"
-				}
-			]
-		};
-		//console.log(JSON.stringify(TrialObj));
-		var ProductObj;
-		ProductObj = {
-			product_ID : product_ID,
-			start_Date : start_Date,
-			end_Date : end_Date,
-			store : store
-                };
-		ProductArray.push(ProductObj);	
-		//console.log(JSON.stringify(ProductArray));
-
-		var DeviceObj;
-		DeviceObj = {
-			device_ID : device_ID,
-			product : [
-				ProductObj
-			]		
-                };
-		DeviceArray.push(DeviceObj);
-	}			
-}
-
-var HistoryObj;
-HistoryObj = {
-	user_ID : user_ID,
-	product : {
-		product_history :
-			DeviceArray
-	}			
-};
-console.log(JSON.stringify(HistoryObj));
-
-}
-
 function loadData(key ,result) {
  
  // Get the data in Couchbase using the get method ()
@@ -145,7 +65,7 @@ function loadData(key ,result) {
 
 function saveData(key,w_data ,result) {
  console.log("saveData....\n");
- // Insert the data in Couchbase using the add method ()
+ // save the data in Couchbase using the insert method ()
    var cb = new couchbase.Cluster(couchbaseserver);
    var myBucket = cb.openBucket(bucketfd);
    myBucket.insert(key, JSON.stringify(w_data), function(err,data) {
@@ -242,21 +162,20 @@ function updateHistoryData(data,parameter,result) {
 			console.log("No find the same device_ID");
 			//console.log(JSON.stringify(val));
 			product_history.push(val);
-
-			productObj = {
-				product_ID : parameter.product_ID,
-				start_Date : parameter.start_Date,
-				end_Date : parameter.end_Date,
-				store : parameter.store
-			};
-			var historyObj = {
-				device_ID : parameter.device_ID,
-				product : [
-					productObj
-				]
-			}
-			product_history.push(historyObj);
 		});
+		productObj = {
+			product_ID : parameter.product_ID,
+			start_Date : parameter.start_Date,
+			end_Date : parameter.end_Date,
+			store : parameter.store
+		};
+		var historyObj = {
+			device_ID : parameter.device_ID,
+			product : [
+				productObj
+			]
+		}
+		product_history.push(historyObj);
 	}else
 	{
 		datajson["product"]["product_history"].forEach(function(val,idx) {		
@@ -356,18 +275,17 @@ function updatePurchasedData(data,parameter,result) {
 			console.log("No find the same device_ID");
 			//console.log(JSON.stringify(val));
 			purchased_Product.push(val);
-
-			productObj = {
-				device_ID : parameter.device_ID,
-				product_ID : parameter.product_ID,
-				start_Date : parameter.start_Date,
-				end_Date : parameter.end_Date,
-				store : parameter.store,
-				receipt_data : parameter.receipt_data,
-				package_name : parameter.package_name
-			};
-			purchased_Product.push(productObj);
 		});
+		productObj = {
+			device_ID : parameter.device_ID,
+			product_ID : parameter.product_ID,
+			start_Date : parameter.start_Date,
+			end_Date : parameter.end_Date,
+			store : parameter.store,
+			receipt_data : parameter.receipt_data,
+			package_name : parameter.package_name
+		};
+		purchased_Product.push(productObj);
 	}else
 	{
 		datajson["product"]["product_list"].forEach(function(val,idx) {		
@@ -473,6 +391,15 @@ exports.getZIP = function getZIP(result) {
   });
  }
 
+exports.getUser_ID = function getUser_ID(result) {
+  // retrieve data from a view
+  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
+  baseview.view('user_id', 'user_id', function(error, data) {
+    //console.log(error, data);
+    result(error, data);
+  });
+ }
+
 exports.getData = function getData(key ,result) {
  
  // Get the data in Couchbase using the get method ()
@@ -516,19 +443,21 @@ exports.disconnect = function disconnect() {
    myBucket.disconnect();
 }
 
-exports.test = function test(test,result) {
-   var myTest = cb.openBucket('beer-sample');
-   myTest.get(test,function(err,data) {
-   if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
-     console.log("Failed to insert data\n");
-	 return;
-   }
-   result(err, data);
+
+exports.setBillingView = function setBillingView() {
+
+ //create a new view
+ var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
+ baseview.setDesign('user_id', {
+  'user_id': {
+   'map': "function (doc, meta) { emit(meta.id, null);}"
+  }
+ }, function(err, res) {
+  if (err != null) console.log(err);
  });
 }
 
-
-exports.setView = function setView() {
+exports.setWeatherView = function setView() {
 
  //create a new view
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
