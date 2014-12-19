@@ -8,8 +8,8 @@ var fs = require("fs"),
 	file = fs.readFileSync(__dirname + "/.env"),
 	env = dotEnv.parse(file);
 
-var BlackCloudLogger = require("../../utils/BlackloudLogger"),
-	logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingVerifyReceipt");
+var BlackloudLogger = require("../../utils/BlackloudLogger"),
+	logger = BlackloudLogger.new(env.PROJECT_NAME, "BillingVerifyReceipt");
 
 var statusCode =
 {
@@ -45,7 +45,7 @@ var verify_receipt_apple = function(body, response)
 			ret = {
 				status: tmpStatus, 
 			}
-    		BlackCloudLogger.log(logger, "error", "Error on iap setup");
+    		BlackloudLogger.log(logger, "error", "Error on iap setup");
 			response.statusCode = 500;
 			response.send(ret);
 		}
@@ -56,7 +56,7 @@ var verify_receipt_apple = function(body, response)
 				ret = {
 					status: tmpStatus, 
 				}
-    			BlackCloudLogger.log(logger, "error", "Error on apple receipt verification");
+    			BlackloudLogger.log(logger, "error", "Error on apple receipt verification");
 				response.statusCode = 500;
 				response.send(ret);
 			}
@@ -74,7 +74,7 @@ var verify_receipt_apple = function(body, response)
 				ret = {
 					status: statusCode['apple_pass'], 
 				}
-    			BlackCloudLogger.log(logger, "info", "Done verifying apple receipt");
+    			BlackloudLogger.log(logger, "info", "Done verifying apple receipt");
 				response.statusCode = 200;
 				response.send(ret);
 			}
@@ -113,7 +113,7 @@ var verify_receipt_apple_renew = function(receipt_data, callback)
 						ret.status = statusCode[1];
                 }
 				ret.data = body;
-    			BlackCloudLogger.log(logger, "info", "Done verifying apple renew receipt");
+    			BlackloudLogger.log(logger, "info", "Done verifying apple renew receipt");
             } catch (ex) {
 				console.log(ex);
             }
@@ -121,7 +121,7 @@ var verify_receipt_apple_renew = function(receipt_data, callback)
 			//console.log(err);
 			ret.status = statusCode[1];
 			ret.data = err;
-    		BlackCloudLogger.log(logger, "error", "Fail on verifying apple renew receipt");
+    		BlackloudLogger.log(logger, "error", "Fail on verifying apple renew receipt");
         }
 		callback(ret);
     });
@@ -153,7 +153,7 @@ var verify_receipt_google = function(body, response)
 			ret = {
 				status: tmpStatus, 
 			}
-    		BlackCloudLogger.log(logger, "error", "Error on iap setup");
+    		BlackloudLogger.log(logger, "error", "Error on iap setup");
 			response.statusCode = 500;
 			response.send(ret);
 		}
@@ -164,7 +164,7 @@ var verify_receipt_google = function(body, response)
 				ret = {
 					status: tmpStatus, 
 				}
-    			BlackCloudLogger.log(logger, "error", "Error on google receipt verification");
+    			BlackloudLogger.log(logger, "error", "Error on google receipt verification");
 				response.statusCode = 500;
 				response.send(ret);
 			}
@@ -178,7 +178,7 @@ var verify_receipt_google = function(body, response)
 					status: statusCode['google_pass'], 
 				}
 				//console.log(res);
-    			BlackCloudLogger.log(logger, "info", "Done verifying google receipt");
+    			BlackloudLogger.log(logger, "info", "Done verifying google receipt");
 				response.statusCode = 200;
 				response.send(ret);
 			}
@@ -201,56 +201,39 @@ function getDateString(date) {
 
 function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, purchaseTime)
 {
-	// get date time first
+	// prepare start date & end date first
 	var dateObj = getDateString(purchaseTime);
-	/* insert data to purchased product */
-	var purchasedProduct = {
-		user_ID        : userID, 
-		product        :
-		{
-			product_list   : 
-			[
-				{
-					device_ID      : deviceID, 
-					product_ID     : productID, 
-					start_Date     : dateObj.startDate, 
-					end_Date       : dateObj.endDate, 
-					store          : store, 
-					receipt_data   : receiptData, 
-					package_name   : packageName 
-				}
-			]
-		}
-	}
-	//console.log(purchasedProduct);
-	couchBase.insertData(userID + '_Purchased_Product', purchasedProduct);
-	/* insert data to purchased product   end */	
+	// query trial data first 
+	// if trial exists, then delete it.
+	// if not, do nothing.
+	var key = deviceID + '_Trial';
+	couchBase.getData(key,function(err, data) {
+		if(err) 
+			BlackloudLogger.log(logger, "error", "trial data not found! " + err);
+		else 
+			couchBase.deleteData(key);
+	});
 
-	/* insert data to purchased history */
-	var purchasedHistory = {
-		user_ID        : userID, 
-		product        :
-		{
-			product_history   : 
-			[
-				{
-					device_ID      : deviceID, 
-					product        :
-					[
-						{
-							product_ID     : productID, 
-							start_Date     : dateObj.startDate, 
-							end_Date       : dateObj.endDate, 
-							store          : store,
-							package_name   : packageName
-						}
-					]
-				}
-			]
-		}
-	}
-	couchBase.insertData(userID + '_Purchased_History', purchasedHistory);
-	/* insert data to purchased history   end */	
+	// update purchased product 
+	var params = {
+		user_ID      : userID,
+		device_ID    : deviceID,
+		product_ID   : productID,
+		start_Date   : dateObj.startDate,
+		end_Date     : dateObj.endDate,
+		store        : store,
+		receipt_data : receiptData, 
+		package_name : packageName
+	};
+	couchBase.insertPurchasedData(params, function(err, data) { 
+		if(err) BlackloudLogger.log(logger, 'error', 'insertPurchasedData fail! ' + err);
+	}); 
+
+	// update history data
+	// receipt data is useless in history record, so just remove it.
+	couchBase.insertHistoryData(params, function(err, data) { 
+		if(err) BlackloudLogger.log(logger, 'error', 'insertHistoryData fail! ' + err);
+	}); 
 }
 
 exports.apple  = verify_receipt_apple;
