@@ -9,6 +9,9 @@ else
 fi
 #sudo pm2 start ./utils/BlackloudLogAutoUpdate.js -i 1
 #Zephyr: add for daily update available product
+cd /home/ubuntu/zephyr/BlackloudLoggerServer/
+./start.sh
+cd /home/ubuntu/server/cloud_weather_server/
 sudo pm2 start ./routes/billing/BillingRefreshProduct.js -i 1
 #Zephyr: end
 sudo pm2 start ./routes/weather/WeatherUpdateService.js -i 1
