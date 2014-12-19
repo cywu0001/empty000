@@ -2,11 +2,11 @@ var couchbase = require("./Couchbase");
 var merge = require('merge');
 
 var result = function (err, data) {
-	console.log("callback function:result\n");
-    if (err)
+    	if (err)
 	{ 
-		console.log("get some error:\n",err);
-	}
+		console.log("get some error:"+err);
+	}else
+		console.log("get success:"+err);
 	if(data)
 	{
  		console.log("data:"+JSON.stringify(data));
