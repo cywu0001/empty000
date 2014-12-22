@@ -147,7 +147,7 @@ exports.test = function test(test,result) {
 }
 
 
-exports.setView = function setView() {
+exports.setWeatherView = function setWeatherView() {
 
  //create a new view
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});

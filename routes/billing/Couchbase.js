@@ -471,14 +471,14 @@ exports.setBillingView = function setBillingView() {
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
  baseview.setDesign('user_id', {
   'user_id': {
-   'map': "function (doc, meta) { emit(meta.id, null);}"
+   'map': "function (doc, meta) { if(!doc.Trial) {emit(meta.id, null);}}"
   }
  }, function(err, res) {
   if (err != null) console.log(err);
  });
 }
 
-exports.setWeatherView = function setView() {
+exports.setWeatherView = function setWeatherView() {
 
  //create a new view
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
