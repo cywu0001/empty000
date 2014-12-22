@@ -236,8 +236,7 @@ router.post("/renew_purchased_product"
             //,productIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_product: " + JSON.stringify(req.body));
-	renew_purchased_product.renew(req.body,res);
-    billingRenewPurchasedProduct.renew_purchased_product(req.body, res);
+    billingRenewPurchasedProduct.renew(req.body, res);
 });
 
 router.post("/renew_purchased_all_product"
@@ -246,8 +245,7 @@ router.post("/renew_purchased_all_product"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_all_product: " + JSON.stringify(req.body));
-	renew_purchased_product.renewall(req.body,res);
-    billingRenewPurchasedProduct.renew_all_purchased_product(req.body, res);
+    billingRenewPurchasedProduct.renewall(req.body, res);
 });
 
 
