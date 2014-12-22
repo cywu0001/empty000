@@ -49,7 +49,7 @@ function saveData(key,w_data ,result) {
 			{
 				console.log("Replace data success\n");
 				result(success, null);
-			}			
+			}
 		    myBucket.disconnect();
 
 		});
@@ -123,8 +123,6 @@ function updateHistoryData(data,parameter,result) {
 	filter_device_ID(datajson["product"]["product_history"],parameter.device_ID,function(err) {
 		console.log(err);
 		check = err;
-	});
-
 
 	if(check == false)
 	{
@@ -175,6 +173,8 @@ function updateHistoryData(data,parameter,result) {
 		
 		});
 	}
+	});
+
 	//console.log(product_history);	
 	var purchased_HistoryObj;
 	purchased_HistoryObj = {
@@ -238,8 +238,6 @@ function updatePurchasedData(data,parameter,result) {
 	filter_device_ID(datajson["product"]["product_list"],parameter.device_ID,function(err) {
 		console.log(err);
 		check = err;
-	});
-
 
 	if(check == false)
 	{
@@ -285,6 +283,7 @@ function updatePurchasedData(data,parameter,result) {
 		
 		});
 	}
+	});
 	//console.log(purchased_Product);	
 	var purchased_Obj;
 	purchased_Obj = {
