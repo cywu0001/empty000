@@ -142,7 +142,7 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 				};
 				BlackloudLogger.log(logger, "info", "Successed to get outputdata");
 				var purchaseresult = JSON.parse(JSON.stringify(resultObj));
-				var outputdata = merge(purchase_success,purchaseresult);
+				var outputdata = merge(purchase_all_success,purchaseresult);
 				response.end(JSON.stringify(outputdata));
 				return;
 			}
