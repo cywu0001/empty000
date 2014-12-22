@@ -233,7 +233,7 @@ router.post("/renew_purchased_product"
             ,tokenVerify
             ,userIDVerify
             ,deviceIDVerify
-            ,productIDVerify
+            //,productIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_product: " + JSON.stringify(req.body));
 	renew_purchased_product.renew(req.body,res);
