@@ -6,5 +6,11 @@ var ssl = require('../ssl');
 var http = require('http'),
     https = require('https');
 
+var couchbase_billing = require("../routes/billing/Couchbase");
+var couchbase_weather = require("../routes/weather/Couchbase");
+
+couchbase_billing.setBillingView();
+couchbase_weather.setWeatherView();
+
 app.set('httpsport', 443);
 var httpsServer = https.createServer(ssl.options, app).listen(app.get('httpsport'));
