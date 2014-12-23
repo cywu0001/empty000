@@ -22,14 +22,20 @@ exports.set = function(params, res) {
             status:"lock",
             timeout:timeout
         };
-        exports.lockMap.set(params.device_ID, value);
+         
+        if(exports.lockMap.get(key) == null) {
+            exports.lockMap.set(params.device_ID, value);
+            res.statusCode = 200;
+            res.send(setPurchaseSuccess);
+        }
+        else {
+            res.statusCode = 400;
+            res.send(setPurchaseFail);
+        }
     } catch(err) {
         res.statusCode = 400;
         res.send(setPurchaseFail);
     }
-
-    res.statusCode = 200;
-    res.send(setPurchaseSuccess);
 };
 
 exports.get = function(params, res) {
