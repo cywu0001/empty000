@@ -135,9 +135,8 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 				resultObj = {
 					user_ID : body.user_ID,
 					product: {
-						product_list:[
-							resultArray
-						]
+						product_list:
+							resultArray						
 					}
 				};
 				BlackloudLogger.log(logger, "info", "Successed to get outputdata");
@@ -202,14 +201,12 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 					resultObj = {
 						user_ID : body.user_ID,
 						product : {
-							product_history : [
+							product_history :
 								{
 									device_ID : body.device_ID,
-									product : [
-										resultArray
-									]
+									product :
+										resultArray									
 								}
-							]
 						}
 					};
 					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
