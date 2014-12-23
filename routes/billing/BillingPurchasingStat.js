@@ -12,18 +12,18 @@ var queryResult = {"status":{"code":1217,"message":"Query is_purchasing success"
 
 exports.lockMap = new HashMap();
 exports.set = function(params, res) {
-    try {
-        timeout = setTimeout(function(){
-            console.log(params.device_ID + " remove");
-		    exports.lockMap.remove(params.device_ID);
-	    }, 30 * 1000); //ms
+    try {  
+        if(exports.lockMap.get(params.device_ID) == null) {
+            timeout = setTimeout(function(){
+                console.log(params.device_ID + " remove");
+		        exports.lockMap.remove(params.device_ID);
+	        }, 30 * 1000); //ms
 
-        value = {
-            status:"lock",
-            timeout:timeout
-        };
-         
-        if(exports.lockMap.get(key) == null) {
+            value = {
+                status:"lock",
+                timeout:timeout
+            };
+
             exports.lockMap.set(params.device_ID, value);
             res.statusCode = 200;
             res.send(setPurchaseSuccess);
