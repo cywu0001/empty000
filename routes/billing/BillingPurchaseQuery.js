@@ -307,7 +307,7 @@ exports.enable_trial = function enable_trial(body, response) {
 		end_Date : resultdatestr,
 		store : "",
 		receipt_data : "",
-		package_name : ""
+		package_name : "trial"
 	};
 
 	couchbase.insertPurchasedData(purchaseObj, function (err, data) {
@@ -333,7 +333,8 @@ exports.enable_trial = function enable_trial(body, response) {
 		product_ID : "trial",
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
-		store : ""
+		store : "",
+		package_name : "trial"
 	};
 
 	couchbase.insertHistoryData(purchasehisObj, function (err, data) {
