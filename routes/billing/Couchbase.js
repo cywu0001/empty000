@@ -83,7 +83,8 @@ function createHistoryData(parameter,result) {
 		product_ID : parameter.product_ID,
 		start_Date : parameter.start_Date,
 		end_Date : parameter.end_Date,
-		store : parameter.store
+		store : parameter.store,
+		package_name : parameter.package_name
         };
 
 	var DeviceObj;
@@ -135,7 +136,8 @@ function updateHistoryData(data,parameter,result) {
 			product_ID : parameter.product_ID,
 			start_Date : parameter.start_Date,
 			end_Date : parameter.end_Date,
-			store : parameter.store
+			store : parameter.store,
+			package_name : parameter.package_name
 		};
 		var historyObj = {
 			device_ID : parameter.device_ID,
@@ -156,7 +158,8 @@ function updateHistoryData(data,parameter,result) {
 					product_ID : parameter.product_ID,
 					start_Date : parameter.start_Date,
 					end_Date : parameter.end_Date,
-					store : parameter.store
+					store : parameter.store,
+					package_name : parameter.package_name
 				};
 				val["product"].push(productObj);
 				deviceObj = {
