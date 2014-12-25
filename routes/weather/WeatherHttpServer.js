@@ -52,9 +52,9 @@ function parameterCheck(req, res, next) {
 
 //Add for Demo
 function demoFunction(req, res, next) {
-    if(req.query.zipcode == "89111") {
+    if(req.query.zipcode == "98111") {
         couchbase.getData(req.query.zipcode + "_forecast", function(err, data) {
-            BlackCloudLogger.log(logger, "info", "Get 89111 zip code for demo");
+            BlackCloudLogger.log(logger, "info", "Get 98111 zip code for demo");
             info = JSON.parse(data);
 
             info["data"]["weather"].forEach(function (val, idx) {
