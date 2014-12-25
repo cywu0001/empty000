@@ -50,6 +50,31 @@ function parameterCheck(req, res, next) {
     }
 }
 
+//Add for Demo
+function demoFunction(req, res, next) {
+    if(req.query.zipcode == "89111") {
+        couchbase.getData(req.query.zipcode + "_forecast", function(err, data) {
+            BlackCloudLogger.log(logger, "info", "Get 89111 zip code for demo");
+            info = JSON.parse(data);
+
+            info["data"]["weather"].forEach(function (val, idx) {
+                val.precipMM = "1.0";
+                val.tempMaxC = "29";
+                val.tempMaxF = "85";
+                val.tempMinC = "23";
+                val.tempMinF = "73";
+                val.weatherDesc = "Patchy rain nearby";
+                val.suggestWatering = "0";
+            });
+            res.statusCode = 200;
+            res.end(JSON.stringify(info));
+        });
+    }
+	else {
+	    next();
+    }
+}
+
 function getInfoFromDB(response, zipcode, type) {
     var deferred = Q.defer();
     couchbase.getData(zipcode + "_" + type, function(err, data) {
@@ -124,7 +149,7 @@ router.get("/server_version", function(req, res) {
 });
 
 /* GET forecast. */
-router.get("/forecastweather", clientAuthentication, parameterCheck, function(req, res) {
+router.get("/forecastweather", clientAuthentication, parameterCheck, demoFunction, function(req, res) {
     getInfoFromDB(res, req.query.zipcode, "forecast")
         .then(null, getInfoFromWeb);
 });
