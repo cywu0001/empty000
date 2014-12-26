@@ -136,7 +136,7 @@ var getAvailableProductFromGoogle = function(name, callback) {
 				};
 				if( productList.length > 0 )
 				{
-    				BlackloudLogger.log(logger, "error", "Get available product list successfully");
+    				BlackloudLogger.log(logger, "info", "Get available product list from Google successfully");
 					ret = {
 						status: statusCode['pass'], 
 						product: product

@@ -38,49 +38,58 @@ var verify_receipt_apple = function(body, response)
 
 	var ret;
 
-	iap.setup(function(error) {
-		if(error) {
-			var tmpStatus = statusCode['fail'];
-			tmpStatus.message += ('. ' + error);
-			ret = {
-				status: tmpStatus, 
-			}
-    		BlackloudLogger.log(logger, "error", "Error on iap setup");
+	var data = {
+		'receipt-data' : receiptData, 
+		'password'     : env.APPLE_PASSWORD
+	};
+    postData = JSON.stringify(data);
+    request({
+        uri: 'https://' + env.APPLE_VERIFY_SERVER + '/verifyReceipt',
+        method: 'POST',
+        body: postData,
+        headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            //'content-length': postData.length
+        }
+    }, function (err, res, body) {
+		var ret = {
+			status: '',
+		};
+        if (!err) {
+            try {
+                body = JSON.parse(body);
+                if (res.statusCode == 200) 
+				{
+					if(body.status == 0)
+					{
+						// erase purchasing state
+						billingPurchasingStat.cancel(deviceID);
+						// database access
+						dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms));
+
+						ret.status = statusCode['apple_pass'];
+						response.statusCode = 200;
+    					BlackloudLogger.log(logger, "info", "Done verifying apple receipt");
+					}
+					else
+					{
+						ret.status = statusCode['fail'];
+						response.statusCode = 500;
+    					BlackloudLogger.log(logger, "error", "Fail on verifying apple receipt");
+					}
+                }
+            } catch (ex) {
+				console.log(ex);
+            }
+        } else {
+			ret.status = statusCode['fail'];
 			response.statusCode = 500;
-			response.send(ret);
-		}
-		iap.validate(iap.APPLE, receiptData, function(err, res) {
-			if(err) {
-				var tmpStatus = statusCode['fail'];
-				tmpStatus.message += ('. ' + err);
-				ret = {
-					status: tmpStatus, 
-				}
-    			BlackloudLogger.log(logger, "error", "Error on apple receipt verification");
-				response.statusCode = 500;
-				response.send(ret);
-			}
-			if(iap.isValidated(res)) {
-				//console.log(res);
-				// erase purchasing state
-				billingPurchasingStat.cancel(deviceID);
-				packageName = res.receipt.bid;
-				productID = res.receipt.product_id;
-
-				// database access
-				dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(res.receipt.original_purchase_date_ms));
-
-				// prepare return value
-				ret = {
-					status: statusCode['apple_pass'], 
-				}
-    			BlackloudLogger.log(logger, "info", "Done verifying apple receipt");
-				response.statusCode = 200;
-				response.send(ret);
-			}
-		});
-	});
+    		BlackloudLogger.log(logger, "error", "Fail on verifying apple receipt");
+        }
+		response.send(ret);
+    });
 }
+
 
 var verify_receipt_apple_renew = function(receipt_data, callback)
 {
