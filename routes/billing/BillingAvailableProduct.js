@@ -89,7 +89,6 @@ var getAvailableProductFromGoogle = function(name, callback) {
 
 	if( packageName == null || packageName == '' )
 	{
-    	BlackloudLogger.log(logger, "error", "Missing parameter: packageName");
 		ret = {
 			status: statusCode['missing'], 
 		}
@@ -108,7 +107,6 @@ var getAvailableProductFromGoogle = function(name, callback) {
 			{
 				if(err.message.indexOf('Missing') >= 0)
 				{
-    				BlackloudLogger.log(logger, "error", "Missing parameter");
 					ret = {
 						status: statusCode['missing'], 
 						data: err
@@ -116,7 +114,6 @@ var getAvailableProductFromGoogle = function(name, callback) {
 				}
 				else
 				{
-    				BlackloudLogger.log(logger, "error", "Internal server error");
 					ret = {
 						status: statusCode['nodata'], 
 						data: err
@@ -136,7 +133,6 @@ var getAvailableProductFromGoogle = function(name, callback) {
 				};
 				if( productList.length > 0 )
 				{
-    				BlackloudLogger.log(logger, "info", "Get available product list from Google successfully");
 					ret = {
 						status: statusCode['pass'], 
 						product: product
@@ -144,7 +140,6 @@ var getAvailableProductFromGoogle = function(name, callback) {
 				}
 				else
 				{
-    				BlackloudLogger.log(logger, "error", "No available product found");
 					ret = {
 						status: statusCode['nodata']
 					};

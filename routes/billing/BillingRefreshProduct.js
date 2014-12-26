@@ -3,8 +3,8 @@ var dotEnv = require("dotenv");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
 
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingRefreshProduct");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = BlackloudLogger.new(env.PROJECT_NAME, "BillingRefreshProduct");
 var couchBase = require("./Couchbase");
 var bap = require('./BillingAvailableProduct'); 
 
@@ -19,16 +19,27 @@ var tick = setInterval(dailyRoutine, UPDATE_INTERVAL);
 
 function dailyRoutine() {
 	console.log('Update available product start!');
-    BlackCloudLogger.log(logger, "info", "Update available product start!");
+    BlackloudLogger.log(logger, "info", "Update available product start!");
 
 	var packageName = 'com.test.testsample';
 	var res;
 	bap.getAvailableProduct(packageName, function(res) {
-		var insertData = {
-			package_name   : packageName, 
-			product_ID     : res.product.product_ID_list 
+		if( res.status.code == 1211 )
+		{
+			var insertData = {
+				package_name   : packageName, 
+				product_ID     : res.product.product_ID_list 
+			}
+			couchBase.insertData(packageName + '_Available_Product', insertData, function(err) {
+				if(err == 0) BlackloudLogger.log(logger, "info", "insert product list success");
+				else BlackloudLogger.log(logger, "info", "insert product list fail");
+			});
 		}
-		couchBase.insertData(packageName + '_Available_Product', insertData);
+		else if( res.status.code == 1400 )
+    			BlackloudLogger.log(logger, "error", "Missing Parameters!");
+		else if( res.status.code == 1411 )
+    			BlackloudLogger.log(logger, "info", "No data found!");
+			
 	});
 }
 
