@@ -63,7 +63,7 @@ function demoFunction(req, res, next) {
                 val.tempMaxF = "85";
                 val.tempMinC = "23";
                 val.tempMinF = "73";
-                val.weatherDesc = "Patchy rain nearby";
+                val.weatherCode = "386";
                 val.suggestWatering = "0";
             });
             res.statusCode = 200;
