@@ -24,7 +24,7 @@ exports.verify = function(token, pass, fail) {
         body:    params
     }, function(error, response, body) {
        BlackCloudLogger.log(logger, "info", "statusCode = " + response.statusCode);
-       BlackCloudLogger.log(logger, "info", "body = " + body);
+       BlackCloudLogger.log(logger, "info", "body = " + JSON.stringify(body));
        if (!error && response.statusCode == 200)
            pass();
        else

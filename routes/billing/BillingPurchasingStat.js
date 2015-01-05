@@ -15,7 +15,7 @@ exports.set = function(params, res) {
     try {  
         if(exports.lockMap.get(params.device_ID) == null) {
             timeout = setTimeout(function(){
-                console.log(params.device_ID + " remove");
+                console.log(params.device_ID + " is removed");
 		        exports.lockMap.remove(params.device_ID);
 	        }, 30 * 1000); //ms
 

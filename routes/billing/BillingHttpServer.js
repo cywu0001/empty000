@@ -17,6 +17,13 @@ var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
 var authfail = {"status":{"code":1403,"message":"Authentication failure"}};
 
+function parseUserName(params) {
+    index = params.token.indexOf(":");
+    userName = params.token.substring(0,index);
+    params.user_name = userName;
+    return params;
+}
+
 function tokenVerify(req, res, next) {
     if(req.body.token == null) {
         BlackCloudLogger.log(logger, "info", "Missing parameter");
@@ -39,7 +46,6 @@ function receiptDataVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -51,7 +57,6 @@ function applePasswordVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -63,7 +68,6 @@ function packageNameVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -75,7 +79,6 @@ function signatureVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -87,7 +90,6 @@ function userIDVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -99,7 +101,6 @@ function deviceIDVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid? is there data set?
         next(); 
     }
 }
@@ -111,7 +112,6 @@ function productIDVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid? is there data set?
         next(); 
     }
 }
@@ -123,7 +123,6 @@ function startDateVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -135,7 +134,6 @@ function endDateVerify(req, res, next) {
         res.end(JSON.stringify(parammiss));
     }
     else {
-        //How to check it is valid?
         next(); 
     }
 }
@@ -150,102 +148,102 @@ router.post("/available_product"
             ,tokenVerify
             ,packageNameVerify
             ,function(req, res) {
-    BlackCloudLogger.log(logger, "info", "available_product: " + JSON.stringify(req.body));      
-    billingAvailableProduct.get(req.body, res);
+    BlackCloudLogger.log(logger, "info", "available_product: " + JSON.stringify(req.body));
+    params = parseUserName(req.body);    
+    billingAvailableProduct.get(params, res);
 });
 
 router.post("/verify_receipt_apple"
             ,tokenVerify
             ,receiptDataVerify
             ,applePasswordVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,productIDVerify
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_apple: " + JSON.stringify(req.body));
-    billingVerifyReceipt.apple(req.body, res);
+    params = parseUserName(req.body); 
+    billingVerifyReceipt.apple(params, res);
 });
 
 router.post("/verify_receipt_google"
             ,tokenVerify
             ,receiptDataVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,productIDVerify
             ,packageNameVerify
             ,signatureVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "verify_receipt_google: " + JSON.stringify(req.body));
-    billingVerifyReceipt.google(req.body, res);
+    params = parseUserName(req.body); 
+    billingVerifyReceipt.google(params, res);
 });
 
 router.post("/query_purchased_product"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_product: " + JSON.stringify(req.body));
-
-    billingPurchaseQuery.query_purchased_product(req.body, res);
+    params = parseUserName(req.body); 
+    billingPurchaseQuery.query_purchased_product(params, res);
 
 });
 
 router.post("/query_purchased_all_product"
             ,tokenVerify
-            ,userIDVerify
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_all_product: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_all_product(req.body, res);
+    params = parseUserName(req.body); 
+    billingPurchaseQuery.query_purchased_all_product(params, res);
 
 });
 
 router.post("/query_purchased_history"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "query_purchased_history: " + JSON.stringify(req.body));
-    billingPurchaseQuery.query_purchased_history(req.body, res);
+    params = parseUserName(req.body); 
+    billingPurchaseQuery.query_purchased_history(params, res);
 });
 
 router.post("/is_purchasing"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "is_purchasing: " + JSON.stringify(req.body));
-    purchasingStat.get(req.body, res);
+    params = parseUserName(req.body);
+    purchasingStat.get(params, res);
 });
 
 router.post("/set_purchasing"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "set_purchasing: " + JSON.stringify(req.body));
-    purchasingStat.set(req.body, res);
+    params = parseUserName(req.body);
+    purchasingStat.set(params, res);
 });
 
 router.post("/renew_purchased_product"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             //,productIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_product: " + JSON.stringify(req.body));
-    billingRenewPurchasedProduct.renew(req.body, res);
+    params = parseUserName(req.body);
+    billingRenewPurchasedProduct.renew(params, res);
 });
 
 router.post("/renew_purchased_all_product"
-            ,tokenVerify
-            ,userIDVerify
+            ,tokenVerify    
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "renew_purchased_all_product: " + JSON.stringify(req.body));
-    billingRenewPurchasedProduct.renewall(req.body, res);
+    params = parseUserName(req.body);
+    billingRenewPurchasedProduct.renewall(params, res);
 });
 
 
@@ -254,19 +252,18 @@ router.post("/is_enable_trial"
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "is_enable_trial: " + JSON.stringify(req.body));
-
-    billingPurchaseQuery.is_enable_trial(req.body, res);
+    params = parseUserName(req.body);
+    billingPurchaseQuery.is_enable_trial(params, res);
 
 });
 
 router.post("/enable_trial"
             ,tokenVerify
-            ,userIDVerify
             ,deviceIDVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "enable_trial: " + JSON.stringify(req.body));
-
-    billingPurchaseQuery.enable_trial(req.body, res);
+    params = parseUserName(req.body);
+    billingPurchaseQuery.enable_trial(params, res);
 
 });
 
