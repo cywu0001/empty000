@@ -50,7 +50,7 @@ var renew_purchased_product = function(body, res)
 	console.log('renew_purchased_product start!');
 
 	var token = body.token;
-	var user_ID = body.user_ID;
+	var user_name = body.user_name;
 	var device_ID = body.device_ID;
 	var productId;
 	
@@ -62,7 +62,7 @@ var renew_purchased_product = function(body, res)
 
 	var ret;
 
-	if( token == '' || user_ID == '' || device_ID == '')
+	if( token == '' || user_name == '' || device_ID == '')
 	{
 		ret = 
 		{
@@ -73,7 +73,7 @@ var renew_purchased_product = function(body, res)
 		return;
 	}
 
-	couchbase.getData(user_ID+"_Purchased_Product",
+	couchbase.getData(user_name+"_Purchased_Product",
 		function(err,data)
 		{
 			if(err)
@@ -141,7 +141,7 @@ var renew_purchased_product = function(body, res)
 											couchBaseDataObj['product']['product_list'][i]['end_Date'].setTime(couchBaseDataObj['product']['product_list'][i]['end_Date'].getTime()+ (30 * 24 * 60 * 60 * 1000));
 										}
 									}
-									couchbase.insertData(user_ID+"_Purchased_Product",couchBaseDataObj,
+									couchbase.insertData(user_name+"_Purchased_Product",couchBaseDataObj,
 									function(err,data)
 									{
 										if(err)
@@ -219,7 +219,7 @@ var renew_purchased_product = function(body, res)
 										{
 											couchBaseDataObj["product"]["product_list"][k]["start_Date"] = startTime;
 											couchBaseDataObj["product"]["product_list"][k]["end_Date"] = endTime;
-											couchbase.insertData(user_ID+"_Purchased_Product", couchBaseDataObj,
+											couchbase.insertData(user_name+"_Purchased_Product", couchBaseDataObj,
 												function(err,data)
 												{
 													if(err)
@@ -264,7 +264,7 @@ var renew_all_purchased_product = function(body, res)
 {
 	console.log('renew_all_purchased_product start!');
 	var token = body.token;
-	var user_ID = body.user_ID;
+	var user_name = body.user_name;
 	var package_name = body.package_name;
 	var productId;
 	
@@ -276,7 +276,7 @@ var renew_all_purchased_product = function(body, res)
 
 	var ret;
 
-	if( token == '' || user_ID == '' || package_name == '')
+	if( token == '' || user_name == '' || package_name == '')
 	{
 		ret = 
 		{
@@ -287,7 +287,7 @@ var renew_all_purchased_product = function(body, res)
 		return;
 	}
 	
-	couchbase.getData(user_ID+"_Purchased_Product",
+	couchbase.getData(user_name+"_Purchased_Product",
 		function(err, data)
 		{
 			if(err)
@@ -335,6 +335,22 @@ var renew_all_purchased_product = function(body, res)
 											couchBaseDataObj['product']['product_list'][i]['start_Date'].setTime(couchBaseDataObj['product']['product_list'][i]['start_Date'].getTime()+ (30 * 24 * 60 * 60 * 1000));
 											couchBaseDataObj['product']['product_list'][i]['end_Date'] = new Date(couchBaseDataObj['product']['product_list'][i]['end_Date']);
 											couchBaseDataObj['product']['product_list'][i]['end_Date'].setTime(couchBaseDataObj['product']['product_list'][i]['end_Date'].getTime()+ (30 * 24 * 60 * 60 * 1000));
+											couchbase.insertData(user_name+"_Purchased_Product", couchBaseDataObj,
+												function(err,data)
+												{
+													if(err)
+													{
+														ret ={ status: statusCode['fail'], }
+														res.statusCode = 500;
+													}
+													else
+													{
+														ret = { status: statusCode['pass'], }
+														res.statusCode = 200;
+														console.log("Owen apple done");
+													}
+												}
+											);
 										}
 									}
 								}
@@ -388,11 +404,27 @@ var renew_all_purchased_product = function(body, res)
 													{
 														startTime = body["latest_receipt_info"][j]["purchase_date_ms"];
 														endTime = body["latest_receipt_info"][j]["expires_date_ms"];
+														couchBaseDataObj["product"]["product_list"][i]["start_Date"] = startTime;
+														couchBaseDataObj["product"]["product_list"][i]["end_Date"] = endTime;
+														couchbase.insertData(user_name+"_Purchased_Product", couchBaseDataObj,
+															function(err,data)
+															{
+																if(err)
+																{
+																	ret ={ status: statusCode['fail'], }
+																	res.statusCode = 500;
+																}
+																else
+																{
+																	ret = { status: statusCode['pass'], }
+																	res.statusCode = 200;
+																	console.log("Owen apple done");
+																}
+															}
+														);
 													}
 												}
 											}
-											couchBaseDataObj["product"]["product_list"][i]["start_Date"] = startTime;
-											couchBaseDataObj["product"]["product_list"][i]["end_Date"] = endTime;												
 										} catch(ex){
 											console.log(ex);
 										}
@@ -405,30 +437,7 @@ var renew_all_purchased_product = function(body, res)
 							);
 						}
 					}
-				}
-				
-				couchbase.insertData(user_ID+"_Purchased_Product", couchBaseDataObj,
-					function(err,data)
-					{
-						if(err)
-						{
-							ret = 
-							{
-								status: statusCode['fail'],
-							}
-							res.statusCode = 500;
-						}
-						else
-						{
-							ret = 
-							{
-								status: statusCode['pass'],
-							}
-							res.statusCode = 200;
-							console.log("Owen apple done");
-						}
-					}
-				);				
+				}				
 			}
 		});
 }
