@@ -104,9 +104,11 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 
 exports.query_purchased_all_product = function query_purchased_all_product(body, response) {
 	//query database
+	var dataexist = 0;
 	var purchasekey = body.user_ID + "_Purchased_Product";
 	BlackloudLogger.log(logger, "info", "query_purchased_all_product purchasekey=" + purchasekey);
- 
+ 	BlackloudLogger.log(logger, "info", "query_purchased_all_product body.package_name=" + body.package_name);
+
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 		    BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
@@ -122,33 +124,103 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 			var resultArray = [];
 			if (datajson["product"]["product_list"].length > 0) {
 				for(var i=0; i<datajson["product"]["product_list"].length; i++) {					
-					var PurchaseObj;
-					PurchaseObj = {
-						device_ID : datajson["product"]["product_list"][i]["device_ID"],
-						product_ID : datajson["product"]["product_list"][i]["product_ID"],
-						start_Date : datajson["product"]["product_list"][i]["start_Date"],
-						end_Date : datajson["product"]["product_list"][i]["end_Date"],
-						store : datajson["product"]["product_list"][i]["store"]
-					};
-					resultArray.push(PurchaseObj);			
-				}
-				resultObj = {
-					user_ID : body.user_ID,
-					product: {
-						product_list:
-							resultArray						
+					if (datajson["product"]["product_list"][i]["package_name"] == body.package_name) {
+						dataexist = 1;
+						var PurchaseObj;
+						PurchaseObj = {
+							device_ID : datajson["product"]["product_list"][i]["device_ID"],
+							product_ID : datajson["product"]["product_list"][i]["product_ID"],
+							start_Date : datajson["product"]["product_list"][i]["start_Date"],
+							end_Date : datajson["product"]["product_list"][i]["end_Date"],
+							store : datajson["product"]["product_list"][i]["store"]
+						};
+						resultArray.push(PurchaseObj);
 					}
-				};
-				BlackloudLogger.log(logger, "info", "Successed to get outputdata");
-				var purchaseresult = JSON.parse(JSON.stringify(resultObj));
-				var outputdata = merge(purchase_all_success,purchaseresult);
-				response.end(JSON.stringify(outputdata));
-				return;
+				}
+				if (dataexist == 1) {
+					resultObj = {
+						user_ID : body.user_ID,
+						product: {
+							product_list:
+								resultArray						
+						}
+					};
+					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+					var purchaseresult = JSON.parse(JSON.stringify(resultObj));
+					var outputdata = merge(purchase_all_success,purchaseresult);
+					response.end(JSON.stringify(outputdata));
+					return;
+				}
+				else {
+					BlackloudLogger.log(logger, "info", "package_name not match, return no data");
+					response.statusCode = 500;
+					response.end(JSON.stringify(nodata));
+					return;
+				}
 			}
 			else {
 				BlackloudLogger.log(logger, "info", "product list <0 return no data");
 				response.statusCode = 500;
 				response.end(JSON.stringify(nodata));
+			}
+		}
+	});
+}
+exports.query_purchased_receipt_product = function query_purchased_receipt_product(user_ID, package_name, result) {
+	//query database
+	var dataexist = 0;
+	var purchasekey = user_ID + "_Purchased_Product";
+	BlackloudLogger.log(logger, "info", "query_purchased_receipt_product purchasekey=" + purchasekey);
+ 
+	couchbase.getData(purchasekey, function(err, data) {
+		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
+		    BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
+			result(JSON.stringify(nodata), null);
+		}
+		else {
+			BlackloudLogger.log(logger, "info", "Successed to get data");
+			console.log(data);
+			var datajson = JSON.parse(data);
+			console.log("length="+datajson["product"]["product_list"].length);
+
+			var resultArray = [];
+			if (datajson["product"]["product_list"].length > 0) {
+				for(var i=0; i<datajson["product"]["product_list"].length; i++) {
+					if (datajson["product"]["product_list"][i]["package_name"] == package_name) {
+						dataexist = 1;
+						var PurchaseObj;
+						PurchaseObj = {
+							device_ID : datajson["product"]["product_list"][i]["device_ID"],
+							product_ID : datajson["product"]["product_list"][i]["product_ID"],
+							start_Date : datajson["product"]["product_list"][i]["start_Date"],
+							end_Date : datajson["product"]["product_list"][i]["end_Date"],
+							store : datajson["product"]["product_list"][i]["store"]
+						};
+						resultArray.push(PurchaseObj);
+					}
+				}
+
+				if (dataexist == 1) {
+					resultObj = {
+						user_ID : user_ID,
+						product: {
+							product_list:
+								resultArray						
+						}
+					};
+					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+					var purchaseresult = JSON.parse(JSON.stringify(resultObj));
+					var outputdata = merge(purchase_all_success, purchaseresult);
+					result(JSON.stringify(outputdata), null);
+				}
+				else {
+					BlackloudLogger.log(logger, "info", "package_name not match, return no data");
+					result(JSON.stringify(nodata), null);
+				}
+			}
+			else {
+				BlackloudLogger.log(logger, "info", "product list <0 return no data");
+				result(JSON.stringify(nodata), null);
 			}
 		}
 	});
@@ -264,13 +336,43 @@ exports.is_enable_trial = function is_enable_trial(body, response) {
 exports.enable_trial = function enable_trial(body, response) {
 	//get start date and end date
 	var date = new Date();
-	var resultenabledatestr = date.getFullYear().toString()  +(date.getMonth()+1).toString() + date.getDate().toString();
+	var startMonth, endMonth, startDate, endDate;
+
+	if (date.getMonth() >= 0 && date.getMonth() < 9) {
+		startMonth = "0" + (date.getMonth()+1).toString();
+	}
+	else {
+		startMonth = (date.getMonth()+1).toString();
+	}
+
+	if (date.getDate() >= 1 && date.getDate() < 10) {
+		startDate = "0" + date.getDate().toString();
+	}
+	else {
+		startDate = date.getMonth().toString();
+	}
+	var resultenabledatestr = date.getFullYear().toString()  + startMonth + startDate;
+
 	date.setTime(date.getTime() +  (30 * 24 * 60 * 60 * 1000));
-	var resultdatestr = date.getFullYear().toString()  +(date.getMonth()+1).toString() + date.getDate().toString();
+
+	if (date.getMonth() >= 0 && date.getMonth() < 9) {
+		endMonth = "0" + (date.getMonth()+1).toString();
+	}
+	else {
+		endMonth = (date.getMonth()+1).toString();
+	}
+
+	if (date.getDate() >= 1 && date.getDate() < 10) {
+		endDate = "0" + date.getDate().toString();
+	}
+	else {
+		endDate = date.getMonth().toString();
+	}
+	var resultdatestr = date.getFullYear().toString()  + endMonth + endDate;
 	
 	BlackloudLogger.log(logger, "info", "enable_trial resultenabledatestr=" + resultenabledatestr);
 	BlackloudLogger.log(logger, "info", "enable_trial resultdatestr=" + resultdatestr);
-	
+
 	//insert to trial db
 	var trialkey = body.device_ID + "_Trial";
 	var TrialObj;
@@ -307,7 +409,8 @@ exports.enable_trial = function enable_trial(body, response) {
 		end_Date : resultdatestr,
 		store : "",
 		receipt_data : "",
-		package_name : "trial"
+
+		package_name : body.package_name
 	};
 
 	couchbase.insertPurchasedData(purchaseObj, function (err, data) {
@@ -334,7 +437,8 @@ exports.enable_trial = function enable_trial(body, response) {
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
 		store : "",
-		package_name : "trial"
+
+		package_name : body.package_name
 	};
 
 	couchbase.insertHistoryData(purchasehisObj, function (err, data) {
@@ -349,6 +453,7 @@ exports.enable_trial = function enable_trial(body, response) {
 		}
 
 	});
+
 	BlackloudLogger.log(logger, "info", "enable trial success");
 	response.statusCode = 200;
 	response.end(JSON.stringify(enable_success));
