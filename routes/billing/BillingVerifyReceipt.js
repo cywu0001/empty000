@@ -1,4 +1,5 @@
 var billingPurchasingStat = require('./BillingPurchasingStat'),
+	billingPurchaseQuery = require('./BillingPurchaseQuery'),
 	couchBase = require("./Couchbase"),
 	iap = require('in-app-purchase'),
 	request = require('request');
@@ -53,28 +54,35 @@ var verify_receipt_apple = function(body, response)
         }
     }, function (err, res, body) {
 		var ret = {
-			status: '',
+			status: ''
 		};
         if (!err) {
             try {
                 body = JSON.parse(body);
-                if (res.statusCode == 200) 
+
+	            if (res.statusCode == 200) 
 				{
 					if(body.status == 0)
 					{
 						// erase purchasing state
 						billingPurchasingStat.cancel(deviceID);
 						// database access
-						dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms));
-
-						ret.status = statusCode['apple_pass'];
-						response.statusCode = 200;
-    					BlackloudLogger.log(logger, "info", "Done verifying apple receipt");
+						dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms), 
+							function(data) {
+								//console.log(data);
+								ret = JSON.parse(data);
+								ret.status = statusCode['apple_pass'];
+								response.statusCode = 200;
+								response.send(ret);
+	    						BlackloudLogger.log(logger, "info", "Done verifying apple receipt");
+							}
+						);
 					}
 					else
 					{
 						ret.status = statusCode['fail'];
 						response.statusCode = 500;
+						response.send(ret);
     					BlackloudLogger.log(logger, "error", "Fail on verifying apple receipt");
 					}
                 }
@@ -84,9 +92,9 @@ var verify_receipt_apple = function(body, response)
         } else {
 			ret.status = statusCode['fail'];
 			response.statusCode = 500;
-    		BlackloudLogger.log(logger, "error", "Fail on verifying apple receipt");
+			response.send(ret);
+    		BlackloudLogger.log(logger, "error", "Error on verifying process");
         }
-		response.send(ret);
     });
 }
 
@@ -156,12 +164,13 @@ var verify_receipt_google = function(body, response)
 	});
 
 	iap.setup(function(error) {
+		var ret = {
+			status: ''
+		};
 		if(error) {
 			var tmpStatus = statusCode['fail'];
 			tmpStatus.message += ('. ' + error);
-			ret = {
-				status: tmpStatus, 
-			}
+			ret.status = tmpStatus;
     		BlackloudLogger.log(logger, "error", "Error on iap setup");
 			response.statusCode = 500;
 			response.send(ret);
@@ -170,9 +179,7 @@ var verify_receipt_google = function(body, response)
 			if(err) {
 				var tmpStatus = statusCode['fail'];
 				tmpStatus.message += ('. ' + err);
-				ret = {
-					status: tmpStatus, 
-				}
+				ret.status = tmpStatus;
     			BlackloudLogger.log(logger, "error", "Error on google receipt verification");
 				response.statusCode = 500;
 				response.send(ret);
@@ -181,15 +188,15 @@ var verify_receipt_google = function(body, response)
 				// erase purchasing state
 				billingPurchasingStat.cancel(deviceID);
 				// database access
-				dbUpdate(userID, deviceID, productID, 'Google', receiptData, packageName, res.purchaseTime);
-			
-				ret = {
-					status: statusCode['google_pass'], 
-				}
-				//console.log(res);
-    			BlackloudLogger.log(logger, "info", "Done verifying google receipt");
-				response.statusCode = 200;
-				response.send(ret);
+				dbUpdate(userID, deviceID, productID, 'Google', receiptData, packageName, res.purchaseTime, 
+					function(data) {
+						ret = JSON.parse(data);
+						ret.status = statusCode['google_pass'];
+						response.statusCode = 200;
+						response.send(ret);
+    					BlackloudLogger.log(logger, "info", "Done verifying google receipt");
+					}
+				);
 			}
 		});
 	});
@@ -198,7 +205,7 @@ var verify_receipt_google = function(body, response)
 function getDateString(date) {
 	var startDate = new Date(date), 
 		endDate   = new Date();
-	endDate.setDate(startDate.getDate() + 30);
+	endDate.setTime(startDate.getTime() + (30 * 24 * 60 * 60 * 1000));
 	var sDateString = startDate.toJSON().split('T')[0].replace(new RegExp('-', 'g'), ''), 
 		eDateString = endDate.toJSON().split('T')[0].replace(new RegExp('-', 'g'), '');
 	var ret = {
@@ -208,13 +215,11 @@ function getDateString(date) {
 	return ret;
 }
 
-function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, purchaseTime)
+function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, purchaseTime, callback)
 {
 	// prepare start date & end date first
 	var dateObj = getDateString(purchaseTime);
-	// query trial data first 
-	// if trial exists, then delete it.
-	// if not, do nothing.
+	// once user purchases a product, we should delete the trial info first
 	var key = deviceID + '_Trial';
 	couchBase.getData(key,function(err, data) {
 		if(err) 
@@ -223,7 +228,7 @@ function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, 
 			couchBase.deleteData(key);
 	});
 
-	// update purchased product 
+	// prepare params for database update (Purchased_Product & Purchased_History) 
 	var params = {
 		user_ID      : userID,
 		device_ID    : deviceID,
@@ -234,15 +239,26 @@ function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, 
 		receipt_data : receiptData, 
 		package_name : packageName
 	};
-	couchBase.insertPurchasedData(params, function(err, data) { 
-		if(err) BlackloudLogger.log(logger, 'error', 'insertPurchasedData fail! ' + err);
-	}); 
 
 	// update history data
-	// receipt data is useless in history record, so just remove it.
+	// receipt data is useless in history record so insertHistoryData api call will not put it into db
 	couchBase.insertHistoryData(params, function(err, data) { 
 		if(err) BlackloudLogger.log(logger, 'error', 'insertHistoryData fail! ' + err);
 	}); 
+
+	// update purchased product
+	// also, we do the query after the purchased product list is updated
+	// to reduce api calls during purchasing flow
+	couchBase.insertPurchasedData(params, function(err, data) { 
+		if(err)
+			BlackloudLogger.log(logger, 'error', 'insertPurchasedData fail! ' + err);
+		// get data from database to reduce api call latencies.
+		billingPurchaseQuery.query_purchased_receipt_product(userID, packageName, function(data) {
+			if( typeof callback == 'function' && callback != null )
+				callback(data);
+		});
+	}); 
+
 }
 
 exports.apple  = verify_receipt_apple;
