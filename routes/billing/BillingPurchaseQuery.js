@@ -68,7 +68,7 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 					if (datajson["product"]["product_list"][i]["device_ID"] == body.device_ID) {
 						var PurchaseObj;
 						PurchaseObj = {
-							user_ID : body.user_name,
+							user_name : body.user_name,
 							product: {
 								product_list:[
 									{
@@ -139,7 +139,7 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 				}
 				if (dataexist == 1) {
 					resultObj = {
-						user_ID : body.user_name,
+						user_name : body.user_name,
 						product: {
 							product_list:
 								resultArray						
@@ -202,7 +202,7 @@ exports.query_purchased_receipt_product = function query_purchased_receipt_produ
 
 				if (dataexist == 1) {
 					resultObj = {
-						user_ID : user_name,
+						user_name : user_name,
 						product: {
 							product_list:
 								resultArray						
@@ -271,7 +271,7 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 
 				if (dataexist == 1) {
 					resultObj = {
-						user_ID : body.user_name,
+						user_name : body.user_name,
 						product : {
 							product_history :
 								{
@@ -380,7 +380,7 @@ exports.enable_trial = function enable_trial(body, response) {
 		Trial: [
 			{
 				device_ID : body.device_ID,
-				user_ID : body.user_name,
+				user_name : body.user_name,
 				is_enabled_trial : "1"
 			}
 		]
@@ -402,14 +402,13 @@ exports.enable_trial = function enable_trial(body, response) {
 	//query purchased product database
 	var purchaseObj;
 	purchaseObj = {
-		user_ID : body.user_name,
+		user_name : body.user_name,
 		device_ID : body.device_ID,
 		product_ID : "trial",
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
 		store : "",
 		receipt_data : "",
-
 		package_name : body.package_name
 	};
 
@@ -431,13 +430,12 @@ exports.enable_trial = function enable_trial(body, response) {
 	//query purchased history database
 	var purchasehisObj;
 	purchasehisObj = {
-		user_ID : body.user_name,
+		user_name : body.user_name,
 		device_ID : body.device_ID,
 		product_ID : "trial",
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
 		store : "",
-
 		package_name : body.package_name
 	};
 
