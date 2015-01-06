@@ -32,7 +32,7 @@ var verify_receipt_apple = function(body, response)
 {
 	var	receiptData   = body.receipt_data, 
 		applePassword = body.apple_password,
-	    userID        = body.user_ID,
+	    userName      = body.user_name,
 		deviceID      = body.device_ID,
 		productID     = body.product_ID, 
 		packageName   = body.package_name;
@@ -67,7 +67,7 @@ var verify_receipt_apple = function(body, response)
 						// erase purchasing state
 						billingPurchasingStat.cancel(deviceID);
 						// database access
-						dbUpdate(userID, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms), 
+						dbUpdate(userName, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms), 
 							function(data) {
 								//console.log(data);
 								ret = JSON.parse(data);
@@ -148,7 +148,7 @@ var verify_receipt_google = function(body, response)
 {
 	var	receiptData     = body.receipt_data, 
 		googleSignature = body.signature,
-	    userID          = body.user_ID,
+	    userName        = body.user_name,
 		deviceID        = body.device_ID,
 		productID       = body.product_ID, 
 		packageName     = body.package_name;
@@ -188,7 +188,7 @@ var verify_receipt_google = function(body, response)
 				// erase purchasing state
 				billingPurchasingStat.cancel(deviceID);
 				// database access
-				dbUpdate(userID, deviceID, productID, 'Google', receiptData, packageName, res.purchaseTime, 
+				dbUpdate(userName, deviceID, productID, 'Google', receiptData, packageName, res.purchaseTime, 
 					function(data) {
 						ret = JSON.parse(data);
 						ret.status = statusCode['google_pass'];
@@ -215,7 +215,7 @@ function getDateString(date) {
 	return ret;
 }
 
-function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, purchaseTime, callback)
+function dbUpdate(userName, deviceID, productID, store, receiptData, packageName, purchaseTime, callback)
 {
 	// prepare start date & end date first
 	var dateObj = getDateString(purchaseTime);
@@ -230,7 +230,7 @@ function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, 
 
 	// prepare params for database update (Purchased_Product & Purchased_History) 
 	var params = {
-		user_ID      : userID,
+		user_name    : userName,
 		device_ID    : deviceID,
 		product_ID   : productID,
 		start_Date   : dateObj.startDate,
@@ -253,7 +253,7 @@ function dbUpdate(userID, deviceID, productID, store, receiptData, packageName, 
 		if(err)
 			BlackloudLogger.log(logger, 'error', 'insertPurchasedData fail! ' + err);
 		// get data from database to reduce api call latencies.
-		billingPurchaseQuery.query_purchased_receipt_product(userID, packageName, function(data) {
+		billingPurchaseQuery.query_purchased_receipt_product(userName, packageName, function(data) {
 			if( typeof callback == 'function' && callback != null )
 				callback(data);
 		});
