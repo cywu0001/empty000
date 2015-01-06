@@ -260,6 +260,7 @@ router.post("/is_enable_trial"
 router.post("/enable_trial"
             ,tokenVerify
             ,deviceIDVerify
+            ,packageNameVerify
             ,function(req, res) {
     BlackCloudLogger.log(logger, "info", "enable_trial: " + JSON.stringify(req.body));
     params = parseUserName(req.body);
