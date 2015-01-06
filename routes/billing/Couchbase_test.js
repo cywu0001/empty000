@@ -45,7 +45,7 @@ var status = {
 /*
 var parameterObj;
 parameterObj = {
-	user_ID : "Will",
+	user_name : "Will",
 	device_ID : "2222",
 	product_ID : "3333",
 	start_Date : "2014/12/12",
@@ -58,7 +58,7 @@ couchbase.insertHistoryData(parameterObj,result);
 /*
 var parameterObj;
 parameterObj = {
-	user_ID : "Will",
+	user_name : "Will",
 	device_ID : "2222",
 	product_ID : "1111",
 	start_Date : "2014/12/12",

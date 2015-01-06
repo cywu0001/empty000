@@ -96,14 +96,14 @@ function createHistoryData(parameter,result) {
         };
 	var HistoryObj;
 	HistoryObj = {
-		user_ID : parameter.user_ID,
+		user_name : parameter.user_name,
 		product : {
 			product_history : [
 				DeviceObj
 			]
 		}			
 	};
-	saveData(parameter.user_ID+"_Purchased_History",HistoryObj ,function(err) {
+	saveData(parameter.user_name+"_Purchased_History",HistoryObj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to create History data\n");
 	}
@@ -115,11 +115,11 @@ function updateHistoryData(data,parameter,result) {
 	var datajson = JSON.parse((data));
 	var product_history = [];
 	var device_ID;
-	var user_ID;
+	var user_name;
 	var deviceObj;
 	var productObj;
 	var check;
-	user_ID = datajson["user_ID"];
+	user_name = datajson["user_name"];
 
 	filter_device_ID(datajson["product"]["product_history"],parameter.device_ID,function(err) {
 		console.log(err);
@@ -181,7 +181,7 @@ function updateHistoryData(data,parameter,result) {
 	//console.log(product_history);	
 	var purchased_HistoryObj;
 	purchased_HistoryObj = {
-		user_ID : user_ID,
+		user_name : user_name,
 		product : {
 			product_history :
 				product_history
@@ -189,7 +189,7 @@ function updateHistoryData(data,parameter,result) {
 	};
 	//console.log(JSON.stringify(purchased_HistoryObj));
 
-	saveData(parameter.user_ID+"_Purchased_History",purchased_HistoryObj ,function(err) {
+	saveData(parameter.user_name+"_Purchased_History",purchased_HistoryObj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to save data\n");
 	}
@@ -212,14 +212,14 @@ function createPurchasedData(parameter,result) {
 
 	var PurchasedObj;
 	PurchasedObj = {
-		user_ID : parameter.user_ID,
+		user_name : parameter.user_name,
 		product : {
 			product_list : [
 				ProductObj
 			]
 		}			
 	};
-	saveData(parameter.user_ID+"_Purchased_Product",PurchasedObj ,function(err) {
+	saveData(parameter.user_name+"_Purchased_Product",PurchasedObj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to create Purchased Product data\n");
 	}
@@ -232,11 +232,11 @@ function updatePurchasedData(data,parameter,result) {
 	var datajson = JSON.parse((data));
 	var purchased_Product = [];
 	var device_ID;
-	var user_ID;
+	var user_name;
 	var deviceObj;
 	var productObj;
 	var check;
-	user_ID = datajson["user_ID"];
+	user_name = datajson["user_name"];
 
 	filter_device_ID(datajson["product"]["product_list"],parameter.device_ID,function(err) {
 		console.log(err);
@@ -290,7 +290,7 @@ function updatePurchasedData(data,parameter,result) {
 	//console.log(purchased_Product);	
 	var purchased_Obj;
 	purchased_Obj = {
-		user_ID : user_ID,
+		user_name : user_name,
 		product : {
 			product_list :
 				purchased_Product
@@ -298,7 +298,7 @@ function updatePurchasedData(data,parameter,result) {
 	};
 	//console.log(JSON.stringify(purchased_Obj));
 
-	saveData(parameter.user_ID+"_Purchased_Product",purchased_Obj ,function(err) {
+	saveData(parameter.user_name+"_Purchased_Product",purchased_Obj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to save data\n");
 	}
@@ -341,7 +341,7 @@ exports.insertData = function insertData(key,w_data ,result) {
 exports.insertHistoryData = function insertPurchasedData(parameter,result) {
  	console.log("insertHistoryData....\n");
 
-	loadData(parameter.user_ID+"_Purchased_History",function(err,data) {
+	loadData(parameter.user_name+"_Purchased_History",function(err,data) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to insert history data\n");
 	     createHistoryData(parameter,result);
@@ -357,7 +357,7 @@ exports.insertHistoryData = function insertPurchasedData(parameter,result) {
 exports.insertPurchasedData = function insertPurchasedData(parameter,result) {
  	console.log("insertPurchasedData....\n");
 
-	loadData(parameter.user_ID+"_Purchased_Product",function(err,data) {
+	loadData(parameter.user_name+"_Purchased_Product",function(err,data) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to insert Purchased data\n");
 	     createPurchasedData(parameter,result);
@@ -402,6 +402,15 @@ exports.getUser_ID = function getUser_ID(result) {
   // retrieve data from a view
   var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
   baseview.view('user_id', 'user_id', function(error, data) {
+    //console.log(error, data);
+    result(error, data);
+  });
+ }
+
+exports.getUser_NAME = function getUser_NAME(result) {
+  // retrieve data from a view
+  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
+  baseview.view('user_name', 'user_name', function(error, data) {
     //console.log(error, data);
     result(error, data);
   });
@@ -472,8 +481,8 @@ exports.setBillingView = function setBillingView() {
 
  //create a new view
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
- baseview.setDesign('user_id', {
-  'user_id': {
+ baseview.setDesign('user_name', {
+  'user_name': {
    'map': "function (doc, meta) { if(!doc.Trial) {emit(meta.id, null);}}"
   }
  }, function(err, res) {
