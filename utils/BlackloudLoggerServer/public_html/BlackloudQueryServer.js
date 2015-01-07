@@ -68,7 +68,7 @@ app.post('/StartLogQuery', function(req, res){
 });
 
 //server.listen(8080, process.env.server_ip, function(){
-server.listen(8080, function(){
-	console.log('Server started on port 8080');
+server.listen(9090, function(){
+	console.log('Server started on port 9090');
 });
 
