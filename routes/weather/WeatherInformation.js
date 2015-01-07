@@ -6,8 +6,8 @@ var weatherCodeMap = require("./WeatherCodeMapping");
 var couchbase = require("./Couchbase");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherInfomation");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "WeatherInfomation");
 var logEnable = true;
 var zipCodeLength = 5;
 
@@ -49,8 +49,8 @@ function weatherReq(zipCode, retry, callback) {
      
 	request(url, function(error, response, body) {
 		if(logEnable) {
-			BlackCloudLogger.log(logger, "info", "request: " + url);
-			BlackCloudLogger.log(logger, "info", "body: " + body);
+			logger.log("info", "request: " + url);
+			logger.log("info", "body: " + body);
 		}
 
 		if (!error && response.statusCode == 200) {
@@ -78,7 +78,7 @@ function weatherReq(zipCode, retry, callback) {
 			}
 			else if(body.search(exceededPerSecErrorWWO) >= 0){
 				if(logEnable)
-					BlackCloudLogger.log(logger, "info", exceededPerSecErrorWWO);
+					logger.log("info", exceededPerSecErrorWWO);
 				weatherReq(zipCode, retry, callback);
 			}
 			else if(body.search(exceededPerDayErrorWWO) >= 0){
@@ -87,7 +87,7 @@ function weatherReq(zipCode, retry, callback) {
 			//Try again after 1 second
 			else if(retry >= 1) {
 				if(logEnable)
-					BlackCloudLogger.log(logger, "info", "Access server fail and try again");
+					logger.log("info", "Access server fail and try again");
 				setTimeout(function(){
 					weatherReq(zipCode, --retry, callback);
 				}, 1000);
@@ -130,7 +130,7 @@ exports.get = function(zipCode, result) {
 				couchbase.insertData(zipCode+"_current", currentJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
+							logger.log("info", "Insert current JSON completed");
 						callback(null, weatherInfo);
 					}
 					else {
@@ -202,7 +202,7 @@ exports.get = function(zipCode, result) {
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert forecast JSON completed");
+							logger.log("info", "Insert forecast JSON completed");
 						callback(null);
 					}
 					else {
@@ -227,7 +227,7 @@ exports.get = function(zipCode, result) {
 				couchbase.insertData(zipCode + "", totalJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
+							logger.log("info", "Insert total JSON completed");
 						callback(updateCompleted, "done");
 					}
 					else {
@@ -261,8 +261,8 @@ function weatherBackupReq(zipCode, feature, callback) {
 	request(url, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			if(logEnable) {
-				BlackCloudLogger.log(logger, "info", "request: " + url);
-				//BlackCloudLogger.log(logger, "info", "body: " + body);
+				logger.log("info", "request: " + url);
+				//logger.log("info", "body: " + body);
 			}
 			var weatherInfo = JSON.parse(body);
 
@@ -284,7 +284,7 @@ function weatherBackupReq(zipCode, feature, callback) {
 		}
 		else {
 			if(logEnable)
-				BlackCloudLogger.log(logger, "error", "request error: " + url);
+				logger.log("error", "request error: " + url);
 			callback(serverError, "done");
 		}
 	});    
@@ -321,7 +321,7 @@ exports.getBackup = function(zipCode, result) {
 				couchbase.insertData(zipCode+"_current", currentJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert current JSON completed");
+							logger.log("info", "Insert current JSON completed");
 						callback(null);
 					}
 					else {
@@ -343,7 +343,7 @@ exports.getBackup = function(zipCode, result) {
 				weatherInfo["forecast"]["simpleforecast"]["forecastday"].forEach(function (val, idx) {
 					if(idx > 2){
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Too much forecast information");
+							logger.log("info", "Too much forecast information");
 						return;
 					}
 
@@ -376,7 +376,7 @@ exports.getBackup = function(zipCode, result) {
 				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert forcast JSON completed");
+							logger.log("info", "Insert forcast JSON completed");
 						callback(null);
 					}
 					else {
@@ -399,11 +399,11 @@ exports.getBackup = function(zipCode, result) {
 
 				var totalJson = JSON.parse(JSON.stringify(totalObj));
 				if(logEnable)
-					BlackCloudLogger.log(logger, "info", JSON.stringify(totalObj));
+					logger.log("info", JSON.stringify(totalObj));
 				couchbase.insertData(zipCode + "", totalJson, function(err) {
 					if(err == 0) {
 						if(logEnable)
-							BlackCloudLogger.log(logger, "info", "Insert total JSON completed");
+							logger.log("info", "Insert total JSON completed");
 						callback(updateCompleted, "done");   
 					}
 					else {

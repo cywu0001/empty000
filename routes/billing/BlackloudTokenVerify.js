@@ -4,8 +4,8 @@ var request = require("request");
 var dotEnv = require("dotenv");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "blackloudTokenVerify");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "blackloudTokenVerify");
 
 exports.verify = function(token, pass, fail) {
     var current_time = Math.floor(new time.Date());
@@ -23,8 +23,8 @@ exports.verify = function(token, pass, fail) {
         json:    true,
         body:    params
     }, function(error, response, body) {
-       BlackCloudLogger.log(logger, "info", "statusCode = " + response.statusCode);
-       BlackCloudLogger.log(logger, "info", "body = " + JSON.stringify(body));
+       logger.log("info", "statusCode = " + response.statusCode);
+       logger.log("info", "body = " + JSON.stringify(body));
        if (!error && response.statusCode == 200)
            pass();
        else

@@ -3,8 +3,8 @@ var HashMap = require("hashmap").HashMap;
 var dotEnv = require("dotenv");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "BillingPurchasingStat");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "BillingPurchasingStat");
 
 var setPurchaseSuccess = {"status":{"code":1218,"message":"Set user status to purchasing success"}};
 var setPurchaseFail = {"status":{"code":1413,"message":"Fail to set purchasing"}};
@@ -15,7 +15,7 @@ exports.set = function(params, res) {
     try {  
         if(exports.lockMap.get(params.device_ID) == null) {
             timeout = setTimeout(function(){
-                console.log(params.device_ID + " is removed");
+                logger.log("info", params.device_ID + " is removed");
 		        exports.lockMap.remove(params.device_ID);
 	        }, 30 * 1000); //ms
 

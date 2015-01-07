@@ -7,8 +7,8 @@ var weatherInfo = require("./WeatherInformation");
 var couchbase = require("./Couchbase");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherHttpServer");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "WeatherHttpServer");
 
 var parammiss = {"status":{"code":1400,"message":"Missing parameter"}};
 var paramformaterr = {"status":{"code":1402,"message":"Parameter format error"}};
@@ -21,10 +21,10 @@ var weaservdisconn = {"status":{"code":1408,"message":"Weather information serve
 
 function clientAuthentication(req, res, next) {
     if(req.client.authorized){
-        BlackCloudLogger.log(logger, "info", "Authentication success");
+        logger.log("info", "Authentication success");
         next();
     }else {
-        BlackCloudLogger.log(logger, "info", "Authentication failure");
+        logger.log("info", "Authentication failure");
         res.statusCode = 400;
         res.end(JSON.stringify(authfail));
     }
@@ -36,12 +36,12 @@ function isPositiveInteger(n) {
 
 function parameterCheck(req, res, next) {
     if(req.query.zipcode == null) {
-        BlackCloudLogger.log(logger, "info", "Missing parameter");
+        logger.log("info", "Missing parameter");
         res.statusCode = 400;
         res.end(JSON.stringify(parammiss));
     }
     else if(!isPositiveInteger(req.query.zipcode)) {
-        BlackCloudLogger.log(logger, "info", "Parameter format error");
+        logger.log("info", "Parameter format error");
         res.statusCode = 400;
         res.end(JSON.stringify(paramformaterr));
     }
@@ -54,7 +54,7 @@ function parameterCheck(req, res, next) {
 function demoFunction(req, res, next) {
     if(req.query.zipcode == "98111") {
         couchbase.getData(req.query.zipcode + "_forecast", function(err, data) {
-            BlackCloudLogger.log(logger, "info", "Get 98111 zip code for demo");
+            logger.log("info", "Get 98111 zip code for demo");
             info = JSON.parse(data);
 
             info["data"]["weather"].forEach(function (val, idx) {
@@ -79,7 +79,7 @@ function getInfoFromDB(response, zipcode, type) {
     var deferred = Q.defer();
     couchbase.getData(zipcode + "_" + type, function(err, data) {
         if(err) {
-            BlackCloudLogger.log(logger, "info", "Can't find " + zipcode + "_" + type);
+            logger.log("info", "Can't find " + zipcode + "_" + type);
             params = {
                 response:response,
                 zipcode:zipcode,
@@ -88,7 +88,7 @@ function getInfoFromDB(response, zipcode, type) {
             deferred.reject(params);
         }
         else {
-            BlackCloudLogger.log(logger, "info", "Get weather information success");
+            logger.log("info", "Get weather information success");
             response.statusCode = 200;
             response.end(data);
             deferred.resolve();
@@ -99,7 +99,7 @@ function getInfoFromDB(response, zipcode, type) {
 
 function getInfoFromWeb(params) {
     weatherInfo.get(params.zipcode, function(err) {
-        BlackCloudLogger.log(logger, "info", err);
+        logger.log("info", err);
         if (err == "completed") {
             couchbase.getData(params.zipcode, function(err, data) {
                 getInfoFromDB(params.response, params.zipcode, params.type);

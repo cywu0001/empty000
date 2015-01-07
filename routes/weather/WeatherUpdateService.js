@@ -7,8 +7,8 @@ var weatherInfo = require("./WeatherInformation");
 var couchbase = require("./Couchbase");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
-var BlackCloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackCloudLogger.new(env.PROJECT_NAME, "WeatherUpdateService");
+var BlackloudLogger = require("../../utils/BlackloudLogger");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "WeatherUpdateService");
 var logEnable = true;
 
 /*
@@ -26,10 +26,10 @@ var midnight = new time.Date(current.getFullYear(), current.getMonth(), current.
 var midnightTime = Math.floor(midnight/1000);
 
 if(logEnable) {
-	BlackCloudLogger.log(logger, "info", "env.UPDATE_TIMING: " + parseFloat(env.UPDATE_TIMING));
-	BlackCloudLogger.log(logger, "info", "env.UPDATE_INTERVAL: " + parseInt(env.UPDATE_INTERVAL));
-	BlackCloudLogger.log(logger, "info", "current time: " + current + " " + currentTime);
-	BlackCloudLogger.log(logger, "info", "midnight time: " + midnight + " " + midnightTime);
+	logger.log("info", "env.UPDATE_TIMING: " + parseFloat(env.UPDATE_TIMING));
+	logger.log("info", "env.UPDATE_INTERVAL: " + parseInt(env.UPDATE_INTERVAL));
+	logger.log("info", "current time: " + current + " " + currentTime);
+	logger.log("info", "midnight time: " + midnight + " " + midnightTime);
 }
 
 //ex.2:00 ___ 14:00 ___ 2:00
@@ -51,7 +51,7 @@ else if(third > currentTime) {
 }
 
 if(logEnable)
-	BlackCloudLogger.log(logger, "info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) + "mins " + Math.floor(offset%60) + "secs ");
+	logger.log("info", "after " + Math.floor(offset/3600) + "hours " + Math.floor((offset%3600)/60) + "mins " + Math.floor(offset%60) + "secs ");
 
 /*
  * ==================================================
@@ -101,7 +101,7 @@ var updateInformation = function(initialize){
 		}
 	], function (err, res) {
 		if(logEnable)
-			BlackCloudLogger.log(logger, "info", "weather information task is done");
+			logger.log("info", "weather information task is done");
 	});
 }
 updateInformation(true);
