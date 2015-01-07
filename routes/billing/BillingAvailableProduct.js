@@ -4,7 +4,7 @@ var fs = require("fs"),
 	env = dotEnv.parse(file);
 
 var BlackloudLogger = require("../../utils/BlackloudLogger"),
-	logger = BlackloudLogger.new(env.PROJECT_NAME, "BillingAvailableProduct"),
+	logger = new BlackloudLogger(env.PROJECT_NAME, "BillingAvailableProduct"),
 	couchBase = require("./Couchbase");
 
 var google = require('googleapis'),
@@ -40,7 +40,7 @@ var getAvailableProductFromBlackloud = function(body, response) {
 	
 	if( packageName == null || packageName == '' )
 	{
-    	BlackloudLogger.log(logger, "error", "Missing parameter: packageName");
+    	logger.log("error", "Missing parameter: packageName");
 		ret = {
 			status: statusCode['missing'], 
 		}
@@ -52,7 +52,7 @@ var getAvailableProductFromBlackloud = function(body, response) {
 	couchBase.getData(packageName + '_Available_Product', function(err, data) {
 		if( err )
 		{
-    		BlackloudLogger.log(logger, "error", "Internal server error");
+    		logger.log("error", "Internal server error");
 			ret = {
 				status: statusCode['nodata'],
 				data  : err
@@ -64,7 +64,7 @@ var getAvailableProductFromBlackloud = function(body, response) {
 			data = JSON.parse(data);
 			if( data.product_ID.length > 0 )
 			{
-    			BlackloudLogger.log(logger, "info", "Get available product list successfully");
+    			logger.log("info", "Get available product list successfully");
 				ret = {
 					status: statusCode['pass'],
 					product: data
@@ -72,7 +72,7 @@ var getAvailableProductFromBlackloud = function(body, response) {
 			}
 			else
 			{
-				BlackloudLogger.log(logger, "error", "No available product found");
+				logger.log("error", "No available product found");
 				ret = {
 					status: statusCode['nodata']
 				};
