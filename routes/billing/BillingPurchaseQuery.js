@@ -5,7 +5,8 @@ var env = dotEnv.parse(file);
 var merge = require('merge');
 var couchbase = require("./Couchbase");
 var BlackloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackloudLogger.new(env.PROJECT_NAME, "BillingPurchaseQuery");
+
+var logger = new BlackloudLogger(env.PROJECT_NAME, 'BillingPurchaseQuery');
 
 var purchase_success = {"status" :{"code": 1214, "message": "Query purchased product success"},};
 var purchase_all_success = {"status" :{"code": 1215, "message": "Query purchased all product success"},};
@@ -51,15 +52,15 @@ function checkDate(startDate, endDate, dbstartDate, dbendDate) {
 exports.query_purchased_product = function query_purchased_product(body, response) {
 	//query database
 	var purchasekey = body.user_name + "_Purchased_Product";
-	BlackloudLogger.log(logger, "info", "query_purchased_product purchasekey=" + purchasekey);
+	logger.log("info", "query_purchased_product purchasekey=" + purchasekey);
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
-		    BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
+		    logger.log("info", "Failed to get data, return no data");
 	            response.statusCode = 500;
 	            response.end(JSON.stringify(nodata));
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "Successed to get data");
+			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
 			console.log("length="+datajson["product"]["product_list"].length);
@@ -81,7 +82,7 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 								]
 							}
 						};
-						BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+						logger.log("info", "Successed to get outputdata");
 						var purchaseresult = JSON.parse(JSON.stringify(PurchaseObj));
 						var outputdata = merge(purchase_success,purchaseresult);
 	    				        response.statusCode = 200;
@@ -89,12 +90,12 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 						return;
 					}
 				}
-			     BlackloudLogger.log(logger, "info", "device_ID not found, return no data");
+			     logger.log("info", "device_ID not found, return no data");
 		             response.statusCode = 500;
 		             response.end(JSON.stringify(nodata));
 			}
 			else {
-			    BlackloudLogger.log(logger, "info", "product list <0 return no data");
+			    logger.log("info", "product list <0 return no data");
 		            response.statusCode = 500;
 		            response.end(JSON.stringify(nodata));
 			}
@@ -106,17 +107,17 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 	//query database
 	var dataexist = 0;
 	var purchasekey = body.user_name + "_Purchased_Product";
-	BlackloudLogger.log(logger, "info", "query_purchased_all_product purchasekey=" + purchasekey);
- 	BlackloudLogger.log(logger, "info", "query_purchased_all_product body.package_name=" + body.package_name);
+	logger.log("info", "query_purchased_all_product purchasekey=" + purchasekey);
+ 	logger.log("info", "query_purchased_all_product body.package_name=" + body.package_name);
 
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
-		    BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
+		    logger.log("info", "Failed to get data, return no data");
 	            response.statusCode = 500;
 	            response.end(JSON.stringify(nodata));
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "Successed to get data");
+			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
 			console.log("length="+datajson["product"]["product_list"].length);
@@ -145,21 +146,21 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 								resultArray						
 						}
 					};
-					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+					logger.log("info", "Successed to get outputdata");
 					var purchaseresult = JSON.parse(JSON.stringify(resultObj));
 					var outputdata = merge(purchase_all_success,purchaseresult);
 					response.end(JSON.stringify(outputdata));
 					return;
 				}
 				else {
-					BlackloudLogger.log(logger, "info", "package_name not match, return no data");
+					logger.log("info", "package_name not match, return no data");
 					response.statusCode = 500;
 					response.end(JSON.stringify(nodata));
 					return;
 				}
 			}
 			else {
-				BlackloudLogger.log(logger, "info", "product list <0 return no data");
+				logger.log("info", "product list <0 return no data");
 				response.statusCode = 500;
 				response.end(JSON.stringify(nodata));
 			}
@@ -170,15 +171,15 @@ exports.query_purchased_receipt_product = function query_purchased_receipt_produ
 	//query database
 	var dataexist = 0;
 	var purchasekey = user_name + "_Purchased_Product";
-	BlackloudLogger.log(logger, "info", "query_purchased_receipt_product purchasekey=" + purchasekey);
+	logger.log("info", "query_purchased_receipt_product purchasekey=" + purchasekey);
  
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
-		    BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
+		    logger.log("info", "Failed to get data, return no data");
 			result(JSON.stringify(nodata), null);
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "Successed to get data");
+			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
 			console.log("length="+datajson["product"]["product_list"].length);
@@ -208,18 +209,18 @@ exports.query_purchased_receipt_product = function query_purchased_receipt_produ
 								resultArray						
 						}
 					};
-					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+					logger.log("info", "Successed to get outputdata");
 					var purchaseresult = JSON.parse(JSON.stringify(resultObj));
 					var outputdata = merge(purchase_all_success, purchaseresult);
 					result(JSON.stringify(outputdata), null);
 				}
 				else {
-					BlackloudLogger.log(logger, "info", "package_name not match, return no data");
+					logger.log("info", "package_name not match, return no data");
 					result(JSON.stringify(nodata), null);
 				}
 			}
 			else {
-				BlackloudLogger.log(logger, "info", "product list <0 return no data");
+				logger.log("info", "product list <0 return no data");
 				result(JSON.stringify(nodata), null);
 			}
 		}
@@ -229,16 +230,16 @@ exports.query_purchased_receipt_product = function query_purchased_receipt_produ
 exports.query_purchased_history = function query_purchased_history(body, response) {
 	//query database
 	var purchasekey = body.user_name + "_Purchased_History";
-	BlackloudLogger.log(logger, "info", "query_purchased_history purchasekey=" + purchasekey);
+	logger.log("info", "query_purchased_history purchasekey=" + purchasekey);
 	var dataexist = 0;
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
-			BlackloudLogger.log(logger, "info", "Failed to get data, return no data");
+			logger.log("info", "Failed to get data, return no data");
 			response.statusCode = 500;
 			response.end(JSON.stringify(nodata));
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "Successed to get data");
+			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
 			var i, j;
@@ -281,14 +282,14 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 								}
 						}
 					};
-					BlackloudLogger.log(logger, "info", "Successed to get outputdata");
+					logger.log("info", "Successed to get outputdata");
 					var purchasehisresult = JSON.parse(JSON.stringify(resultObj));
 					var outputdata = merge(purchase_history_sucecess,purchasehisresult);
 					response.end(JSON.stringify(outputdata));
 
 				}
 				else {
-					BlackloudLogger.log(logger, "info", "Do not find data, return no data");
+					logger.log("info", "Do not find data, return no data");
 					response.statusCode = 500;
 					response.end(JSON.stringify(nodata));
 				}
@@ -296,7 +297,7 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 
 			}//end if product_history check
 			else {
-				BlackloudLogger.log(logger, "info", "product history not exist, return no data");
+				logger.log("info", "product history not exist, return no data");
 				response.statusCode = 500;
 				response.end(JSON.stringify(nodata));
 			}
@@ -309,14 +310,14 @@ exports.is_enable_trial = function is_enable_trial(body, response) {
 	var trialresult;
 	//get trial data
 	var purchasekey = body.device_ID + "_Trial";
-	BlackloudLogger.log(logger, "info", "is_enable_trial purchasekey=" + purchasekey);
+	logger.log("info", "is_enable_trial purchasekey=" + purchasekey);
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
-			BlackloudLogger.log(logger, "info", "Failed to get data");
+			logger.log("info", "Failed to get data");
 			trialresult = {"is_enabled_trial": "0"};
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "Successed to get data");
+			logger.log("info", "Successed to get data");
 			var datajson = JSON.parse(data);
     		console.log("data=", datajson["Trial"][0].is_enabled_trial);
 			var isenable = datajson["Trial"][0].is_enabled_trial;
@@ -370,8 +371,8 @@ exports.enable_trial = function enable_trial(body, response) {
 	}
 	var resultdatestr = date.getFullYear().toString()  + endMonth + endDate;
 	
-	BlackloudLogger.log(logger, "info", "enable_trial resultenabledatestr=" + resultenabledatestr);
-	BlackloudLogger.log(logger, "info", "enable_trial resultdatestr=" + resultdatestr);
+	logger.log("info", "enable_trial resultenabledatestr=" + resultenabledatestr);
+	logger.log("info", "enable_trial resultdatestr=" + resultdatestr);
 
 	//insert to trial db
 	var trialkey = body.device_ID + "_Trial";
@@ -388,10 +389,10 @@ exports.enable_trial = function enable_trial(body, response) {
 	var TrialJson = JSON.parse(JSON.stringify(TrialObj));
 	couchbase.insertData(trialkey, TrialJson, function(err) {
 		if(err == 0) {
-			BlackloudLogger.log(logger, "info", "insert to trial db success");
+			logger.log("info", "insert to trial db success");
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "insert to trial db fail");
+			logger.log("info", "insert to trial db fail");
 			response.statusCode = 500;
 			response.end(JSON.stringify(enabletrialfail));
 			return;
@@ -414,10 +415,10 @@ exports.enable_trial = function enable_trial(body, response) {
 
 	couchbase.insertPurchasedData(purchaseObj, function (err, data) {
 		if(err == 0) {
-			BlackloudLogger.log(logger, "info", "insert to Purchased_Product db success");
+			logger.log("info", "insert to Purchased_Product db success");
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "insert to Purchased_Product db fail");
+			logger.log("info", "insert to Purchased_Product db fail");
 			response.statusCode = 500;
 			response.end(JSON.stringify(enabletrialfail));
 			return;
@@ -441,10 +442,10 @@ exports.enable_trial = function enable_trial(body, response) {
 
 	couchbase.insertHistoryData(purchasehisObj, function (err, data) {
 		if(err == 0) {
-			BlackloudLogger.log(logger, "info", "insert to Purchased_History db success");
+			logger.log("info", "insert to Purchased_History db success");
 		}
 		else {
-			BlackloudLogger.log(logger, "info", "insert to Purchased_History db fail");
+			logger.log("info", "insert to Purchased_History db fail");
 			response.statusCode = 500;
 			response.end(JSON.stringify(enabletrialfail));
 			return;
@@ -452,7 +453,7 @@ exports.enable_trial = function enable_trial(body, response) {
 
 	});
 
-	BlackloudLogger.log(logger, "info", "enable trial success");
+	logger.log("info", "enable trial success");
 	response.statusCode = 200;
 	response.end(JSON.stringify(enable_success));
 }
