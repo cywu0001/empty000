@@ -1,0 +1,19 @@
+
+/* ========================================================= */
+					Blackloud Log Query Tool
+					------------------------
+Feature:
+	1. Query log that made by BlackloudLogger
+	2. Provides web interface to make query easier
+	3. Querys debug/exceptions logs with specific date/time and label
+
+Usage: 
+	1. npm install
+	2. cd public_html/
+	3. modify "server_ip" with your machine IP in the .env file
+	4. node server.js (startup the web service)
+	5. open your browser and connect to http://YOUR_IP:8080/LogQuery
+
+/* ========================================================= */
+
+

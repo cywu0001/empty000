@@ -1,0 +1,85 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blacklout Log Query Tool</title>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+	<script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script src="js/timepicker/jquery.timepicker.min.js"></script>
+    <script src="js/jPaginate/jquery.paginate.js"></script>
+    <script src="js/jquery-jsonview/jquery.jsonview.js"></script>
+    <script src="js/gistfile/gistfile1.js"></script>
+    <script src="js/excellentexport/excellentexport.js"></script>
+    <script src="js/query.js"></script>
+	<link rel="stylesheet" href="js/jquery-ui-1.11.1.custom/jquery-ui.css">
+    <link rel="stylesheet" href="js/timepicker/jquery.timepicker.css">
+    <link rel="stylesheet" href="js/jPaginate/css/style.css">
+    <link rel="stylesheet" href="js/jquery-jsonview/jquery.jsonview.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script type="text/javascript">
+function userlogin() {
+	alert('!!!!');
+}
+function test() {
+	$('#user_name').val('alohaaaaa');
+}
+</script>
+<div id="title">Blackloud Log Query</div>
+<div id="body">
+	<div id='panel'>
+		<h4>Type</h4>
+		<p id='type'> 
+			<input type="checkbox" id="type_debug" name='type_group'><label for="type_debug">Debug</label>
+			<input type="checkbox" id="type_exceptions" name='type_group'><label for="type_exceptions">Exceptions</label>
+		</p>
+		<h4>Level</h4>
+		<p id='level'> 
+			<input type="checkbox" id="level_info"><label for="level_info">Info</label>
+			<input type="checkbox" id="level_warn"><label for="level_warn">Warning</label>
+	   		<input type="checkbox" id="level_error"><label for="level_error">Error</label>
+		</p>
+		<h4>Start Date</h4>
+		<p><input type='text' id='startdate' maxlength='10' width='10'></p>
+		<h4>End Date</h4>
+		<p><input type='text' id='enddate'></p>
+		<h4>Time Duration From</h4>
+		<p><input type='text' id='starttime'></p>
+		<h4>Time Duration To</h4>
+		<p><input type='text' id='endtime'></p>
+		<h4>Search for Project</h4>
+		<p>
+			<select id='project'>
+				<option selected='selected'>WEATHER</option>
+				<option>BILLING</option>
+			</select>
+		</p>
+		<h4>Search for Label</h4>
+		<p><input type='text' id='label'></p>
+		<p>
+			<a id='query_btn' href='#'>Query</a>
+			<a id='export_btn' href='#'>Export</a>
+		<p>
+<!--
+		<p><div id='close_panel' class='control'>[Close]</div></p>
+-->
+	</div>
+	<div id='s_panel' style="display: none" class="control"></div>
+	<div id='container'>
+		<div id='message' class='log_msg'></div>
+		<div id='result_block'>
+			<div id='content'></div>
+			<div id='navbar'></div>
+		</div>
+	</div>
+	<div id='debug' class='log_msg'></div>
+	<div id='tmp' style="display:none"></div>
+</div>
+<div id='mask' style="display: none">
+	<div id='progress'>
+		<p><img src='img/loader.gif'></img>  Loading...</p>
+	</div>
+</div>
+</body>
+</html>
+

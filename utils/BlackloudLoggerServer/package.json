@@ -1,0 +1,22 @@
+{
+  "name": "BlackCloudLogger",
+  "description": "BlackCloud logger",
+  "version": "0.0.1",
+  "author": {
+    "name": "Zephyr Chen"
+  },
+  "dependencies": {
+    "caller-id": "*",
+    "fs": "*",
+    "express": "*",
+    "body-parser": "*",
+    "winston": "*",
+	"winstond": "*",
+	"dotenv": "*",
+	"aws-sdk": "*",
+	"line-by-line": "*"
+  },
+  "engines": {
+    "node": "*"
+  }
+}

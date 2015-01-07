@@ -7,11 +7,15 @@ else
   npm install
   echo "=========================\n"
 fi
-#sudo pm2 start ./utils/BlackloudLogAutoUpdate.js -i 1
 #Zephyr: add for daily update available product
-cd /home/ubuntu/zephyr/BlackloudLoggerServer/
+ROOT_DIR=$(pwd)
+echo $ROOT_DIR
+#sudo pm2 start utils/BlackloudLoggerServer/BlackloudLoggerServer.js -i 1 
+#sudo pm2 start utils/BlackloudLoggerServer/public_html/BlackloudQueryServer.js -i 1
+#sudo pm2 start utils/BlackloudLoggerServer/BlackloudLogAutoUpdate.js -i 1
+cd $ROOT_DIR/utils/BlackloudLoggerServer/
 ./start.sh
-cd /home/ubuntu/server/cloud_weather_server/
+cd $ROOT_DIR
 sudo pm2 start ./routes/billing/BillingRefreshProduct.js -i 1
 #Zephyr: end
 sudo pm2 start ./routes/weather/WeatherUpdateService.js -i 1
