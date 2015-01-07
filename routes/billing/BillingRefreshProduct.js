@@ -1,12 +1,12 @@
-var fs = require("fs");
-var dotEnv = require("dotenv");
-var file = fs.readFileSync(__dirname + "/.env");
-var env = dotEnv.parse(file);
+var fs = require("fs"),
+	dotEnv = require("dotenv"),
+	file = fs.readFileSync(__dirname + "/.env"),
+	env = dotEnv.parse(file);
 
-var BlackloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackloudLogger.new(env.PROJECT_NAME, "BillingRefreshProduct");
-var couchBase = require("./Couchbase");
-var bap = require('./BillingAvailableProduct'); 
+var BlackloudLogger = require("../../utils/BlackloudLogger"),
+	logger = new BlackloudLogger(env.PROJECT_NAME, "BillingRefreshProduct"),
+	couchBase = require("./Couchbase"),
+	bap = require('./BillingAvailableProduct'); 
 
 var UPDATE_INTERVAL = 1000 * 60 * 60 * 24; // 24hr -> ms
 //var UPDATE_INTERVAL = 1000 * 5; // 12hr -> ms
@@ -18,8 +18,8 @@ dailyRoutine();
 var tick = setInterval(dailyRoutine, UPDATE_INTERVAL);
 
 function dailyRoutine() {
-	console.log('Update available product start!');
-    BlackloudLogger.log(logger, "info", "Update available product start!");
+	//console.log('Update available product start!');
+    logger.log( "info", "Update available product start!");
 
 	var packageName = 'com.test.testsample';
 	var res;
@@ -31,14 +31,14 @@ function dailyRoutine() {
 				product_ID     : res.product.product_ID_list 
 			}
 			couchBase.insertData(packageName + '_Available_Product', insertData, function(err) {
-				if(err == 0) BlackloudLogger.log(logger, "info", "insert product list success");
-				else BlackloudLogger.log(logger, "info", "insert product list fail");
+				if(err == 0) logger.log( "info", "insert product list success");
+				else logger.log( "info", "insert product list fail");
 			});
 		}
 		else if( res.status.code == 1400 )
-    			BlackloudLogger.log(logger, "error", "Missing Parameters!");
+    			logger.log( "error", "Missing Parameters!");
 		else if( res.status.code == 1411 )
-    			BlackloudLogger.log(logger, "info", "No data found!");
+    			logger.log( "info", "No data found!");
 			
 	});
 }
