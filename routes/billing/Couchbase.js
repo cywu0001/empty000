@@ -6,7 +6,7 @@ var dotEnv = require("dotenv");
 var file = fs.readFileSync(__dirname + "/.env");
 var env = dotEnv.parse(file);
 var BlackloudLogger = require("../../utils/BlackloudLogger");
-var logger = BlackloudLogger.new(env.PROJECT_NAME, "Couchbase");
+var logger = new BlackloudLogger(env.PROJECT_NAME, "Couchbase");
 
 var bucketfd = env.BUCKETFD;
 var couchbaseserver = env.COUCHBASE_SERVER;
@@ -21,7 +21,7 @@ function loadData(key ,result) {
    myBucket.get(key,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to load data\n");
-	 BlackloudLogger.log(logger, "info", "loadData():Failed to load data "+key);
+	 logger.log("info", "loadData():Failed to load data "+key);
 	 result(err, null);
 	 return;
    }
@@ -43,7 +43,7 @@ function saveData(key,w_data ,result) {
     	myBucket.replace(key, JSON.stringify(w_data), function(err,data){
 			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 				console.log("Failed to replace data\n");
-				BlackloudLogger.log(logger, "info", "saveData():Failed to replace data "+key);
+				logger.log("info", "saveData():Failed to replace data "+key);
 				result(err, null);
 			}else
 			{
@@ -106,6 +106,7 @@ function createHistoryData(parameter,result) {
 	saveData(parameter.user_name+"_Purchased_History",HistoryObj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to create History data\n");
+		 logger.log("info", "createHistoryData():Failed to create History data "+parameter.user_name);
 	}
 	result(err,null);
 	});
@@ -222,6 +223,7 @@ function createPurchasedData(parameter,result) {
 	saveData(parameter.user_name+"_Purchased_Product",PurchasedObj ,function(err) {
 	if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 	     console.log("Failed to create Purchased Product data\n");
+		 logger.log("info", "createPurchasedData():Failed to create Purchased Product data"+parameter.user_name);
 	}
 	result(err,null);
 	});
@@ -319,7 +321,7 @@ exports.insertData = function insertData(key,w_data ,result) {
     	myBucket.replace(key, JSON.stringify(w_data), function(err,data){
 			if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 				console.log("Failed to replace data\n");
-				BlackloudLogger.log(logger, "info", "insertData():Failed to replace data "+key);
+				logger.log("info", "insertData():Failed to replace data "+key);
 				result(err, null);
 			}else
 			{
@@ -377,7 +379,7 @@ exports.replaceData = function replaceData(key,w_data ,result) {
 	myBucket.replace(key, w_data, function(err,data){
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 			console.log("Failed to replace data\n");
-			BlackCloudLogger.log(logger, "info", "replaceData():Failed to replace data "+key);
+			logger.log("info", "replaceData():Failed to replace data "+key);
 			result(err, null);
 		}else
 		{
@@ -424,7 +426,7 @@ exports.getData = function getData(key ,result) {
    myBucket.get(key,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to get data\n");
-	 BlackloudLogger.log(logger, "info", "getData():Failed to get data "+key);
+	 logger.log("info", "getData():Failed to get data "+key);
 	 result(err, null);
 	 return;
    }
@@ -442,7 +444,7 @@ exports.deleteData = function deleteData(key ,result) {
    myBucket.remove(key,function(err) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to remove data\n");
-	 BlackloudLogger.log(logger, "info", "deleteData():Failed to remove data "+key);
+	 logger.log("info", "deleteData():Failed to remove data "+key);
 	 result(err, null);
 	 return;
    }
