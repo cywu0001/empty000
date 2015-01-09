@@ -485,7 +485,7 @@ exports.setBillingView = function setBillingView() {
  var baseview = require('baseview')({url: c_couchbase,bucket: bucketfd});
  baseview.setDesign('user_name', {
   'user_name': {
-   'map': "function (doc, meta) { if(!doc.Trial) {emit(meta.id, null);}}"
+   'map': "function (doc, meta) { if(doc.product.product_list || doc.product.product_history) {emit(meta.id, null);}}"
   }
  }, function(err, res) {
   if (err != null) console.log(err);
