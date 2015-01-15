@@ -3,8 +3,8 @@ var	winston = require('winston'),
 var winstonNsSocket = require('winston-nssocket').Nssocket;
 
 var logServerInfo = {
-	//ip : '54.68.219.109', 
-	ip : '10.70.1.213', 
+	ip : '54.68.219.109', 
+	//ip : '10.70.1.213', 
 	port : {
 		'WEATHER' : 8081,
 		'BILLING' : 8082,
@@ -34,7 +34,7 @@ function BlackloudLogger(project, title) {
 				new winston_es({ 
 					level     : 'info',
 					host      : logServerInfo.ip,
-					indexName : 'BlackloudLogger',
+					indexName : 'blackloudlog',
 					typeName  : this.project, 
 					diable_fields : true
 				})
