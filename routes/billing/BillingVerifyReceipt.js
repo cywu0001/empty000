@@ -180,7 +180,7 @@ var verify_receipt_google = function(body, response)
 				var tmpStatus = statusCode['fail'];
 				tmpStatus.message += ('. ' + err);
 				ret.status = tmpStatus;
-    			logger.log( "error", "Error on google receipt verification");
+    			logger.log( "error", "Error on google receipt verification : " + err);
 				response.statusCode = 500;
 				response.send(ret);
 			}
@@ -219,6 +219,7 @@ function dbUpdate(userName, deviceID, productID, store, receiptData, packageName
 {
 	// prepare start date & end date first
 	var dateObj = getDateString(purchaseTime);
+	/*
 	// once user purchases a product, we should delete the trial info first
 	var key = deviceID + '_Trial';
 	couchBase.getData(key,function(err, data) {
@@ -227,6 +228,7 @@ function dbUpdate(userName, deviceID, productID, store, receiptData, packageName
 		else 
 			couchBase.deleteData(key);
 	});
+	*/
 
 	// prepare params for database update (Purchased_Product & Purchased_History) 
 	var params = {

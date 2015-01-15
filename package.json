@@ -13,7 +13,6 @@
     "winston": "~0.8.3",
     "winston-elasticsearch": "~0.1.1",
     "winston-nssocket": "~0.1.0",
-    "caller-id": "~0.1.0",
     "couchbase": "~2.0.2",
     "baseview": "~0.0.3",
     "merge": "~1.2.0",
@@ -27,6 +26,7 @@
     "q": "~1.1.2",
 	"googleapis": "~1.0.21",
     "in-app-purchase": "~0.2.1",
+    "basic-auth": "~1.0.0",
     "multer": "~0.1.6"
   }
 }

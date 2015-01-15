@@ -3,7 +3,8 @@ var	winston = require('winston'),
 var winstonNsSocket = require('winston-nssocket').Nssocket;
 
 var logServerInfo = {
-	ip : '54.68.219.109', 
+	//ip : '54.68.219.109', 
+	ip : '10.70.1.213', 
 	port : {
 		'WEATHER' : 8081,
 		'BILLING' : 8082,
@@ -30,7 +31,6 @@ function BlackloudLogger(project, title) {
 					label: this.title,
 					timestamp: true, 
 				}),
-				/*
 				new winston_es({ 
 					level     : 'info',
 					host      : logServerInfo.ip,
@@ -38,7 +38,6 @@ function BlackloudLogger(project, title) {
 					typeName  : this.project, 
 					diable_fields : true
 				})
-				*/
 			],
 			exceptionHandlers: [
 			    new (winston.transports.Console)({ 
@@ -49,10 +48,12 @@ function BlackloudLogger(project, title) {
 			],
 			exitOnError: false, 
 		});
+		/*
 	this.logger.add(winstonNsSocket, {
 		host: logServerInfo.ip,
 		port: logServerInfo.port[project]
 	});
+	*/
 }
 
 BlackloudLogger.prototype = {

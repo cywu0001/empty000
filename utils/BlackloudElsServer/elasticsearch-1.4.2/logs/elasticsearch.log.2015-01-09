@@ -1,0 +1,51 @@
+[2015-01-09 02:47:27,677][INFO ][node                     ] [Zeus] version[1.4.2], pid[22994], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-09 02:47:27,679][INFO ][node                     ] [Zeus] initializing ...
+[2015-01-09 02:47:27,682][INFO ][plugins                  ] [Zeus] loaded [], sites []
+[2015-01-09 02:47:31,310][INFO ][node                     ] [Zeus] initialized
+[2015-01-09 02:47:31,311][INFO ][node                     ] [Zeus] starting ...
+[2015-01-09 02:47:31,507][INFO ][transport                ] [Zeus] bound_address {inet[/0:0:0:0:0:0:0:0:9300]}, publish_address {inet[/172.31.5.24:9300]}
+[2015-01-09 02:47:31,609][INFO ][discovery                ] [Zeus] elasticsearch/gaiMMUiQT_-9eZSOLSU7tg
+[2015-01-09 02:47:35,405][INFO ][cluster.service          ] [Zeus] new_master [Zeus][gaiMMUiQT_-9eZSOLSU7tg][ip-172-31-5-24][inet[/172.31.5.24:9300]], reason: zen-disco-join (elected_as_master)
+[2015-01-09 02:47:35,443][INFO ][http                     ] [Zeus] bound_address {inet[/0:0:0:0:0:0:0:0:9200]}, publish_address {inet[/172.31.5.24:9200]}
+[2015-01-09 02:47:35,444][INFO ][node                     ] [Zeus] started
+[2015-01-09 02:47:35,445][INFO ][gateway                  ] [Zeus] recovered [0] indices into cluster_state
+[2015-01-09 02:47:51,033][INFO ][node                     ] [Zeus] stopping ...
+[2015-01-09 02:47:51,055][INFO ][node                     ] [Zeus] stopped
+[2015-01-09 02:47:51,055][INFO ][node                     ] [Zeus] closing ...
+[2015-01-09 02:47:51,062][INFO ][node                     ] [Zeus] closed
+[2015-01-09 02:47:56,740][INFO ][node                     ] [ISAAC] version[1.4.2], pid[23041], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-09 02:47:56,748][INFO ][node                     ] [ISAAC] initializing ...
+[2015-01-09 02:47:56,752][INFO ][plugins                  ] [ISAAC] loaded [], sites []
+[2015-01-09 02:48:02,306][INFO ][node                     ] [ISAAC] initialized
+[2015-01-09 02:48:02,307][INFO ][node                     ] [ISAAC] starting ...
+[2015-01-09 02:48:02,421][INFO ][transport                ] [ISAAC] bound_address {inet[/0:0:0:0:0:0:0:0:9300]}, publish_address {inet[/172.31.5.24:9300]}
+[2015-01-09 02:48:02,515][INFO ][discovery                ] [ISAAC] elasticsearch/stlLA9xqR8KRdcp-RN7wVA
+[2015-01-09 02:48:06,331][INFO ][cluster.service          ] [ISAAC] new_master [ISAAC][stlLA9xqR8KRdcp-RN7wVA][ip-172-31-5-24][inet[/172.31.5.24:9300]], reason: zen-disco-join (elected_as_master)
+[2015-01-09 02:48:06,381][INFO ][gateway                  ] [ISAAC] recovered [0] indices into cluster_state
+[2015-01-09 02:48:06,382][INFO ][http                     ] [ISAAC] bound_address {inet[/0:0:0:0:0:0:0:0:9200]}, publish_address {inet[/172.31.5.24:9200]}
+[2015-01-09 02:48:06,382][INFO ][node                     ] [ISAAC] started
+[2015-01-09 02:49:15,966][INFO ][node                     ] [ISAAC] stopping ...
+[2015-01-09 02:49:15,990][INFO ][node                     ] [ISAAC] stopped
+[2015-01-09 02:49:15,991][INFO ][node                     ] [ISAAC] closing ...
+[2015-01-09 02:49:15,997][INFO ][node                     ] [ISAAC] closed
+[2015-01-09 02:49:49,979][INFO ][node                     ] [Red Claw] version[1.4.2], pid[23193], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-09 02:49:49,980][INFO ][node                     ] [Red Claw] initializing ...
+[2015-01-09 02:49:49,984][INFO ][plugins                  ] [Red Claw] loaded [], sites []
+[2015-01-09 02:49:53,614][INFO ][node                     ] [Red Claw] initialized
+[2015-01-09 02:49:53,619][INFO ][node                     ] [Red Claw] starting ...
+[2015-01-09 02:49:53,781][INFO ][transport                ] [Red Claw] bound_address {inet[/0:0:0:0:0:0:0:0:9300]}, publish_address {inet[/172.31.5.24:9300]}
+[2015-01-09 02:49:53,837][INFO ][discovery                ] [Red Claw] elasticsearch/Cw-0LZgFR6Sa8B-BEMF2FQ
+[2015-01-09 02:49:57,699][INFO ][cluster.service          ] [Red Claw] new_master [Red Claw][Cw-0LZgFR6Sa8B-BEMF2FQ][ip-172-31-5-24][inet[/172.31.5.24:9300]], reason: zen-disco-join (elected_as_master)
+[2015-01-09 02:49:57,771][INFO ][gateway                  ] [Red Claw] recovered [0] indices into cluster_state
+[2015-01-09 02:49:57,775][INFO ][http                     ] [Red Claw] bound_address {inet[/0:0:0:0:0:0:0:0:9200]}, publish_address {inet[/172.31.5.24:9200]}
+[2015-01-09 02:49:57,775][INFO ][node                     ] [Red Claw] started
+[2015-01-09 05:12:26,053][INFO ][node                     ] [Red Claw] stopping ...
+[2015-01-09 05:12:26,070][INFO ][node                     ] [Red Claw] stopped
+[2015-01-09 05:12:26,071][INFO ][node                     ] [Red Claw] closing ...
+[2015-01-09 05:12:26,077][INFO ][node                     ] [Red Claw] closed
+[2015-01-09 09:27:49,675][INFO ][node                     ] [Arizona Annie] version[1.4.2], pid[25281], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-09 09:27:49,676][INFO ][node                     ] [Arizona Annie] initializing ...
+[2015-01-09 09:27:49,680][INFO ][plugins                  ] [Arizona Annie] loaded [], sites []
+[2015-01-09 09:30:42,669][INFO ][node                     ] [Robbie Robertson] version[1.4.2], pid[25403], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-09 09:30:42,675][INFO ][node                     ] [Robbie Robertson] initializing ...
+[2015-01-09 09:30:42,679][INFO ][plugins                  ] [Robbie Robertson] loaded [], sites []

@@ -1,0 +1,11 @@
+[2015-01-15 16:53:02,658][INFO ][node                     ] [Kubik] version[1.4.2], pid[21213], build[927caff/2014-12-16T14:11:12Z]
+[2015-01-15 16:53:02,664][INFO ][node                     ] [Kubik] initializing ...
+[2015-01-15 16:53:02,730][INFO ][plugins                  ] [Kubik] loaded [cloud-aws], sites []
+[2015-01-15 16:53:08,336][INFO ][node                     ] [Kubik] initialized
+[2015-01-15 16:53:08,337][INFO ][node                     ] [Kubik] starting ...
+[2015-01-15 16:53:09,479][INFO ][transport                ] [Kubik] bound_address {inet[/0:0:0:0:0:0:0:0:9300]}, publish_address {inet[/10.70.1.213:9300]}
+[2015-01-15 16:53:09,554][INFO ][discovery                ] [Kubik] elasticsearch/RI1aeVKaRhm3ON0sj0m1Yg
+[2015-01-15 16:53:13,351][INFO ][cluster.service          ] [Kubik] new_master [Kubik][RI1aeVKaRhm3ON0sj0m1Yg][gmtekbs000-empty][inet[/10.70.1.213:9300]], reason: zen-disco-join (elected_as_master)
+[2015-01-15 16:53:13,821][INFO ][http                     ] [Kubik] bound_address {inet[/0:0:0:0:0:0:0:0:9200]}, publish_address {inet[/10.70.1.213:9200]}
+[2015-01-15 16:53:13,822][INFO ][node                     ] [Kubik] started
+[2015-01-15 16:53:14,861][INFO ][gateway                  ] [Kubik] recovered [1] indices into cluster_state
