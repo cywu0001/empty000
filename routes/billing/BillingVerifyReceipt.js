@@ -67,7 +67,7 @@ var verify_receipt_apple = function(body, response)
 						// erase purchasing state
 						billingPurchasingStat.cancel(deviceID);
 						// database access
-						dbUpdate(userName, deviceID, productID, 'Apple', receiptData, packageName, Number(body.receipt.original_purchase_date_ms), 
+						dbUpdate(userName, deviceID, productID, 'Apple', JSON.stringify(body), packageName, Number(body.receipt.original_purchase_date_ms), 
 							function(data) {
 								//console.log(data);
 								ret = JSON.parse(data);
