@@ -8,6 +8,19 @@ var BlackloudLogger = require("../../utils/BlackloudLogger");
 
 var logger = new BlackloudLogger(env.PROJECT_NAME, 'BillingPurchaseQuery');
 
+var PROD = "product",
+    PROD_LIST = "product_list",
+    PROD_ID = "product_ID",
+	PROD_HISTORY = "product_history",
+	DEV_ID= "device_ID",
+	START_DATE= "start_Date",
+	END_DATE = "end_Date",
+	STORE= "store",
+	PKG_NAME = "package_name",
+	TRIAL = "Trial";
+	TRIAL_ENABLE = "is_enabled_trial",
+	TRIAL_DATE = 30;
+
 var purchase_success = {"status" :{"code": 1214, "message": "Query purchased product success"},};
 var purchase_all_success = {"status" :{"code": 1215, "message": "Query purchased all product success"},};
 var purchase_history_sucecess = {"status" :{"code": 1216, "message": "Query purchased history success"},};
@@ -52,6 +65,8 @@ function checkDate(startDate, endDate, dbstartDate, dbendDate) {
 exports.query_purchased_product = function query_purchased_product(body, response) {
 	//query database
 	var purchasekey = body.user_name + "_Purchased_Product";
+	var username = body.user_name;
+	var devID = body.device_ID;
 	logger.log("info", "query_purchased_product purchasekey=" + purchasekey);
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
@@ -63,21 +78,21 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
-			console.log("length="+datajson["product"]["product_list"].length);
-			if (datajson["product"]["product_list"].length > 0) {
-				for(var i=0; i<datajson["product"]["product_list"].length; i++) {
-					if (datajson["product"]["product_list"][i]["device_ID"] == body.device_ID) {
+			console.log("length=" + datajson[PROD][PROD_LIST].length);
+			if (datajson[PROD][PROD_LIST].length > 0) {
+				for(var i=0; i<datajson[PROD][PROD_LIST].length; i++) {
+					if (datajson[PROD][PROD_LIST][i][DEV_ID] == devID) {
 						var PurchaseObj;
 						PurchaseObj = {
-							user_name : body.user_name,
+							user_name : username,
 							product: {
 								product_list:[
 									{
-										device_ID : body.device_ID,
-										product_ID : datajson["product"]["product_list"][i]["product_ID"],
-										start_Date : datajson["product"]["product_list"][i]["start_Date"],
-										end_Date : datajson["product"]["product_list"][i]["end_Date"],
-										store : datajson["product"]["product_list"][i]["store"]
+										device_ID : devID,
+										product_ID : datajson[PROD][PROD_LIST][i][PROD_ID],
+										start_Date : datajson[PROD][PROD_LIST][i][START_DATE],
+										end_Date : datajson[PROD][PROD_LIST][i][END_DATE],
+										store : datajson[PROD][PROD_LIST][i][STORE]
 									}
 								]
 							}
@@ -90,14 +105,14 @@ exports.query_purchased_product = function query_purchased_product(body, respons
 						return;
 					}
 				}
-			     logger.log("info", "device_ID not found, return no data");
-		             response.statusCode = 500;
-		             response.end(JSON.stringify(nodata));
+				logger.log("info", "device_ID not found, return no data");
+				response.statusCode = 500;
+				response.end(JSON.stringify(nodata));
 			}
 			else {
-			    logger.log("info", "product list <0 return no data");
-		            response.statusCode = 500;
-		            response.end(JSON.stringify(nodata));
+				logger.log("info", "product list <0 return no data");
+				response.statusCode = 500;
+				response.end(JSON.stringify(nodata));
 			}
 		}
 	});
@@ -107,8 +122,10 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 	//query database
 	var dataexist = 0;
 	var purchasekey = body.user_name + "_Purchased_Product";
+	var username = body.user_name;
+	var pkgname = body.package_name;
 	logger.log("info", "query_purchased_all_product purchasekey=" + purchasekey);
- 	logger.log("info", "query_purchased_all_product body.package_name=" + body.package_name);
+ 	logger.log("info", "query_purchased_all_product pkgname=" + pkgname);
 
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
@@ -120,27 +137,27 @@ exports.query_purchased_all_product = function query_purchased_all_product(body,
 			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
-			console.log("length="+datajson["product"]["product_list"].length);
+			console.log("length=" + datajson[PROD][PROD_LIST].length);
 
 			var resultArray = [];
-			if (datajson["product"]["product_list"].length > 0) {
-				for(var i=0; i<datajson["product"]["product_list"].length; i++) {					
-					if (datajson["product"]["product_list"][i]["package_name"] == body.package_name) {
+			if (datajson[PROD][PROD_LIST].length > 0) {
+				for(var i=0; i<datajson[PROD][PROD_LIST].length; i++) {					
+					if (datajson[PROD][PROD_LIST][i][PKG_NAME] == pkgname) {
 						dataexist = 1;
 						var PurchaseObj;
 						PurchaseObj = {
-							device_ID : datajson["product"]["product_list"][i]["device_ID"],
-							product_ID : datajson["product"]["product_list"][i]["product_ID"],
-							start_Date : datajson["product"]["product_list"][i]["start_Date"],
-							end_Date : datajson["product"]["product_list"][i]["end_Date"],
-							store : datajson["product"]["product_list"][i]["store"]
+							device_ID : datajson[PROD][PROD_LIST][i][DEV_ID],
+							product_ID : datajson[PROD][PROD_LIST][i][PROD_ID],
+							start_Date : datajson[PROD][PROD_LIST][i][START_DATE],
+							end_Date : datajson[PROD][PROD_LIST][i][END_DATE],
+							store : datajson[PROD][PROD_LIST][i][STORE]
 						};
 						resultArray.push(PurchaseObj);
 					}
 				}
 				if (dataexist == 1) {
 					resultObj = {
-						user_name : body.user_name,
+						user_name : username,
 						product: {
 							product_list:
 								resultArray						
@@ -182,20 +199,20 @@ exports.query_purchased_receipt_product = function query_purchased_receipt_produ
 			logger.log("info", "Successed to get data");
 			console.log(data);
 			var datajson = JSON.parse(data);
-			console.log("length="+datajson["product"]["product_list"].length);
+			console.log("length=" + datajson[PROD][PROD_LIST].length);
 
 			var resultArray = [];
-			if (datajson["product"]["product_list"].length > 0) {
-				for(var i=0; i<datajson["product"]["product_list"].length; i++) {
-					if (datajson["product"]["product_list"][i]["package_name"] == package_name) {
+			if (datajson[PROD][PROD_LIST].length > 0) {
+				for(var i=0; i<datajson[PROD][PROD_LIST].length; i++) {
+					if (datajson[PROD][PROD_LIST][i][PKG_NAME] == package_name) {
 						dataexist = 1;
 						var PurchaseObj;
 						PurchaseObj = {
-							device_ID : datajson["product"]["product_list"][i]["device_ID"],
-							product_ID : datajson["product"]["product_list"][i]["product_ID"],
-							start_Date : datajson["product"]["product_list"][i]["start_Date"],
-							end_Date : datajson["product"]["product_list"][i]["end_Date"],
-							store : datajson["product"]["product_list"][i]["store"]
+							device_ID : datajson[PROD][PROD_LIST][i][DEV_ID],
+							product_ID : datajson[PROD][PROD_LIST][i][PROD_ID],
+							start_Date : datajson[PROD][PROD_LIST][i][START_DATE],
+							end_Date : datajson[PROD][PROD_LIST][i][END_DATE],
+							store : datajson[PROD][PROD_LIST][i][STORE]
 						};
 						resultArray.push(PurchaseObj);
 					}
@@ -232,6 +249,11 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 	var purchasekey = body.user_name + "_Purchased_History";
 	logger.log("info", "query_purchased_history purchasekey=" + purchasekey);
 	var dataexist = 0;
+	var username = body.user_name;
+	var devid = body.device_ID;
+	var pkgname = body.package_name;
+	var startdate = body.start_Date;
+	var enddate = body.end_Date;
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 			logger.log("info", "Failed to get data, return no data");
@@ -244,23 +266,24 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 			var datajson = JSON.parse(data);
 			var i, j;
 			var resultArray = [];
-			if (datajson["product"]["product_history"].length > 0) {
-				for(i=0; i<datajson["product"]["product_history"].length; i++) {
-					if (datajson["product"]["product_history"][i]["device_ID"] == body.device_ID) {
-						if (datajson["product"]["product_history"][i]["product"].length>0) {
-							for(j=0; j<datajson["product"]["product_history"][i]["product"].length; j++) {
-								if(datajson["product"]["product_history"][i]["product"][j]["package_name"] == body.package_name) {
-									var checkresult = checkDate(body.start_Date,body.end_Date,
-										datajson["product"]["product_history"][i]["product"][j]["start_Date"],
-										datajson["product"]["product_history"][i]["product"][j]["end_Date"]);
+			if (datajson[PROD][PROD_HISTORY].length > 0) {
+				for(i=0; i<datajson[PROD][PROD_HISTORY].length; i++) {
+					if (datajson[PROD][PROD_HISTORY][i][DEV_ID] == devid) {
+						if (datajson[PROD][PROD_HISTORY][i][PROD].length>0) {
+							for(j=0; j<datajson[PROD][PROD_HISTORY][i][PROD].length; j++) {
+								if(datajson[PROD][PROD_HISTORY][i][PROD][j][PKG_NAME] == pkgname) {
+									var dbstartdate = datajson[PROD][PROD_HISTORY][i][PROD][j][START_DATE];
+									var dbenddate = datajson[PROD][PROD_HISTORY][i][PROD][j][END_DATE];
+
+									var checkresult = checkDate(startdate, enddate, dbstartdate, dbenddate);
 									if (checkresult == true) {
 										dataexist = 1;
 										var PurchasehisObj;
 										PurchasehisObj = {
-											product_ID : datajson["product"]["product_history"][i]["product"][j]["product_ID"],
-											start_Date : datajson["product"]["product_history"][i]["product"][j]["start_Date"],
-											end_Date : datajson["product"]["product_history"][i]["product"][j]["end_Date"],
-											store : datajson["product"]["product_history"][i]["product"][j]["store"]
+											product_ID : datajson[PROD][PROD_HISTORY][i][PROD][j][PROD_ID],
+											start_Date : dbstartdate,
+											end_Date : dbenddate,
+											store : datajson[PROD][PROD_HISTORY][i][PROD][j][STORE]
 										};
 										resultArray.push(PurchasehisObj);		
 									}
@@ -272,11 +295,11 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 
 				if (dataexist == 1) {
 					resultObj = {
-						user_name : body.user_name,
+						user_name : username,
 						product : {
 							product_history :
 								{
-									device_ID : body.device_ID,
+									device_ID : devid,
 									product :
 										resultArray									
 								}
@@ -284,7 +307,7 @@ exports.query_purchased_history = function query_purchased_history(body, respons
 					};
 					logger.log("info", "Successed to get outputdata");
 					var purchasehisresult = JSON.parse(JSON.stringify(resultObj));
-					var outputdata = merge(purchase_history_sucecess,purchasehisresult);
+					var outputdata = merge(purchase_history_sucecess, purchasehisresult);
 					response.end(JSON.stringify(outputdata));
 
 				}
@@ -314,18 +337,18 @@ exports.is_enable_trial = function is_enable_trial(body, response) {
 	couchbase.getData(purchasekey, function(err, data) {
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
 			logger.log("info", "Failed to get data");
-			trialresult = {"is_enabled_trial": "0"};
+			trialresult = {TRIAL_ENABLE: "0"};
 		}
 		else {
 			logger.log("info", "Successed to get data");
 			var datajson = JSON.parse(data);
-    		console.log("data=", datajson["Trial"][0].is_enabled_trial);
-			var isenable = datajson["Trial"][0].is_enabled_trial;
+    		console.log("data=", datajson[TRIAL][0].is_enabled_trial);
+			var isenable = datajson[TRIAL][0].is_enabled_trial;
 			if (isenable == 1) {
-				trialresult = {"is_enabled_trial": "1"};
+				trialresult = {TRIAL_ENABLE: "1"};
 			}
 			else {
-				trialresult = {"is_enabled_trial": "0"};
+				trialresult = {TRIAL_ENABLE: "0"};
 			}
 		}
 		var outputdata = merge(query_enable_success,trialresult);
@@ -338,6 +361,9 @@ exports.enable_trial = function enable_trial(body, response) {
 	//get start date and end date
 	var date = new Date();
 	var startMonth, endMonth, startDate, endDate;
+	var username = body.user_name;
+	var devid = body.device_ID;
+	var pkgname = body.package_name;
 
 	if (date.getMonth() >= 0 && date.getMonth() < 9) {
 		startMonth = "0" + (date.getMonth()+1).toString();
@@ -350,11 +376,11 @@ exports.enable_trial = function enable_trial(body, response) {
 		startDate = "0" + date.getDate().toString();
 	}
 	else {
-		startDate = date.getMonth().toString();
+		startDate = date.getDate().toString();
 	}
 	var resultenabledatestr = date.getFullYear().toString()  + startMonth + startDate;
 
-	date.setTime(date.getTime() +  (30 * 24 * 60 * 60 * 1000));
+	date.setTime(date.getTime() +  (TRIAL_DATE * 24 * 60 * 60 * 1000));
 
 	if (date.getMonth() >= 0 && date.getMonth() < 9) {
 		endMonth = "0" + (date.getMonth()+1).toString();
@@ -367,7 +393,7 @@ exports.enable_trial = function enable_trial(body, response) {
 		endDate = "0" + date.getDate().toString();
 	}
 	else {
-		endDate = date.getMonth().toString();
+		endDate = date.getDate().toString();
 	}
 	var resultdatestr = date.getFullYear().toString()  + endMonth + endDate;
 	
@@ -375,13 +401,13 @@ exports.enable_trial = function enable_trial(body, response) {
 	logger.log("info", "enable_trial resultdatestr=" + resultdatestr);
 
 	//insert to trial db
-	var trialkey = body.device_ID + "_Trial";
+	var trialkey = devid + "_Trial";
 	var TrialObj;
 	TrialObj = {
 		Trial: [
 			{
-				device_ID : body.device_ID,
-				user_name : body.user_name,
+				device_ID : devid,
+				user_name : username,
 				is_enabled_trial : "1"
 			}
 		]
@@ -399,18 +425,19 @@ exports.enable_trial = function enable_trial(body, response) {
 		}
 	});
 
+
 	//insert to Purchased_Product db
 	//query purchased product database
 	var purchaseObj;
 	purchaseObj = {
-		user_name : body.user_name,
-		device_ID : body.device_ID,
+		user_name : username,
+		device_ID : devid,
 		product_ID : "trial",
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
 		store : "",
 		receipt_data : "",
-		package_name : body.package_name
+		package_name : pkgname
 	};
 
 	couchbase.insertPurchasedData(purchaseObj, function (err, data) {
@@ -431,13 +458,13 @@ exports.enable_trial = function enable_trial(body, response) {
 	//query purchased history database
 	var purchasehisObj;
 	purchasehisObj = {
-		user_name : body.user_name,
-		device_ID : body.device_ID,
+		user_name : username,
+		device_ID : devid,
 		product_ID : "trial",
 		start_Date : resultenabledatestr,
 		end_Date : resultdatestr,
 		store : "",
-		package_name : body.package_name
+		package_name : pkgname
 	};
 
 	couchbase.insertHistoryData(purchasehisObj, function (err, data) {
