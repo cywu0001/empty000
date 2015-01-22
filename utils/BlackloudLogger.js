@@ -2,58 +2,70 @@ var	winston = require('winston'),
 	winston_es = require('winston-elasticsearch');
 var winstonNsSocket = require('winston-nssocket').Nssocket;
 
+var fs = require("fs"),
+	dotEnv = require("dotenv"),
+	file = fs.readFileSync(__dirname + "/.env"),
+	env = dotEnv.parse(file);
+
 var logServerInfo = {
 	ip : '54.68.219.109', 
-	//ip : '10.70.1.213', 
-	port : {
-		'WEATHER' : 8081,
-		'BILLING' : 8082,
-		'NONE3'   : 8083,
-		'NONE4'   : 8084,
-		'NONE5'   : 8085,
-		'NONE6'   : 8086,
-		'NONE7'   : 8087,
-		'NONE8'   : 8088,
-		'NONE9'   : 8089,
-		'NONE10'  : 8090
-	}
 }
 
 function BlackloudLogger(project, title) {
 	this.project = project;
     this.title = title ? title : null;
-	this.logger = 
-		new (winston.Logger)({
-			// default transports were set to the remote log server
-			transports: [
-			    new (winston.transports.Console)({ 
-					json: false, 
-					label: this.title,
-					timestamp: true, 
-				}),
-				new winston_es({ 
-					level     : 'info',
-					host      : logServerInfo.ip,
-					indexName : 'blackloudlog',
-					typeName  : this.project, 
-					diable_fields : true
-				})
-			],
-			exceptionHandlers: [
-			    new (winston.transports.Console)({ 
-					json: false, 
-					label: this.title,
-					timestamp: true 
-				}),
-			],
-			exitOnError: false, 
-		});
-		/*
-	this.logger.add(winstonNsSocket, {
-		host: logServerInfo.ip,
-		port: logServerInfo.port[project]
-	});
-	*/
+
+	if( env.LOGGER_ENABLE == 'on' )
+	{
+		this.logger = 
+			new (winston.Logger)({
+				// default transports were set to the remote log server
+				transports: [
+				    new (winston.transports.Console)({ 
+						json: false, 
+						label: this.title,
+						timestamp: true, 
+					}),
+					new winston_es({ 
+						level     : 'info',
+						host      : logServerInfo.ip,
+						indexName : 'blackloudlog',
+						typeName  : this.project, 
+						diable_fields : true
+					})
+				],
+				exceptionHandlers: [
+				    new (winston.transports.Console)({ 
+						json: false, 
+						label: this.title,
+						timestamp: true 
+					})
+				],
+				exitOnError: false, 
+			});
+	}
+	else
+	{
+		this.logger = 
+			new (winston.Logger)({
+				// default transports were set to the remote log server
+				transports: [
+				    new (winston.transports.Console)({ 
+						json: false, 
+						label: this.title,
+						timestamp: true, 
+					}),
+				],
+				exceptionHandlers: [
+				    new (winston.transports.Console)({ 
+						json: false, 
+						label: this.title,
+						timestamp: true 
+					})
+				],
+				exitOnError: false, 
+			});
+	}
 }
 
 BlackloudLogger.prototype = {
