@@ -23,6 +23,11 @@ var apple_password = env.APPLE_PASSWORD;
 var OAuth2 = google.auth.OAuth2;
 var oauth2Client = new OAuth2(clientID, clientSecret, redirectURL);
 
+var G_pkgName;
+var G_data;
+var G_count; 
+var G_res;
+
 var statusCode = 
 {
 	'pass':
@@ -287,6 +292,217 @@ var renew_purchased_product = function(body, res)
 
 exports.renew = renew_purchased_product;
 
+var renew_recursive = function(pkgName, data, count, res, nextFCT)
+{
+	console.log('pkgName = '+pkgName+' data = '+data+' count = '+count);
+	if(count < 0)
+	{
+		console.log("renew_recursive done!")
+		return;
+	}
+	else
+	{
+		//console.log("renew_recursive count = "+count);
+		if(data['product']['product_list'][count]['store'] == 'Google' && (pkgName == data['product']['product_list'][count]['package_name']))
+		{
+			var user_name = data['user_name']
+			var receiptdata = data['product']['product_list'][count]['receipt_data'];
+			var receiptdata = JSON.parse(receiptdata);
+			var device_ID = data['product']['product_list'][count]['device_ID'];
+			var store_flag = data['product']['product_list'][count]['store'];
+			var productId = data['product']['product_list'][count]['product_ID'];
+			var startTime = data['product']['product_list'][count]['start_Date'];
+			var endTime = data['product']['product_list'][count]['end_Date'];
+			var packageName = data['product']['product_list'][count]['package_name'];
+			//console.log('receiptdata = '+receiptdata+' store_flag = ' +store_flag+ 'productId = '+productId+'startTime = '+startTime+'endTime = '+endTime+'packageName = '+packageName);
+			
+			console.log("Google process ");
+			oauth2Client.setCredentials(
+			{
+				refresh_token: refreshToken
+			});
+			
+			androidpublisher.purchases.subscriptions.get
+			(
+				{
+					packageName: receiptdata["packageName"],
+					subscriptionId: receiptdata['productId'],
+					token: receiptdata['purchaseToken'],
+					auth: oauth2Client
+				},
+				function(err,data)
+				{
+					//console.log("Google process 1-1");
+					if(err)
+					{
+						console.log(err);
+						return;
+					}
+					else
+					{
+						//console.log("Google process 1-2 data['autoRenewing'] = "+data['autoRenewing']);
+						if(!data['autoRenewing'])
+						{
+							console.log("Google process");
+							startTime = new Date(startTime);
+							startTime.setTime(startTime.getTime()+(30 * 24 * 60 * 60 * 1000));
+							endTime = new Date(endTime);
+							endTime.setTime(endTime.getTime()+(30 * 24 * 60 * 60 * 1000));
+						
+							var renewData = {
+								user_name : user_name,
+								device_ID : device_ID,
+								product_ID : productId,
+								start_Date : startTime,
+								end_Date : endTime,
+								store : store_flag,
+								receipt_data : JSON.stringify(receiptdata),
+								package_name : packageName
+								};
+								
+							console.log("renewData = \n"+ JSON.stringify(renewData));
+							couchbase.insertPurchasedData(renewData, 
+									function(err, data)
+									{
+										if(err)
+										{
+											console.log("updating DB error!");
+											ret = 
+											{
+												status: statusCode['fail'],
+											}
+											res.statusCode = 500;
+										}
+										else
+										{
+											console.log("updating DB success!");
+											ret = 
+											{
+												status: statusCode['pass'],
+											}
+											res.statusCode = 200;
+										}
+										nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
+									});
+						}
+					}
+				}
+			);
+		}
+		else if(data['product']['product_list'][count]['store'] == 'Apple' && (pkgName == data['product']['product_list'][count]['package_name']))
+		{
+			var receiptdata = data["product"]["product_list"][count]["receipt_data"];
+			var store_flag = data['product']['product_list'][count]['store'];
+			var startTime = data["product"]["product_list"][count]["start_Date"];
+			var endTime = data["product"]["product_list"][count]["end_Date"];
+			var productId = data["product"]["product_list"][count]["product_ID"];
+			var packageName = data['product']['product_list'][count]['package_name'];
+//			console.log('receiptdata = '+receiptdata+' store_flag = ' +store_flag+ 'productId = '+productId+'startTime = '+startTime+'endTime = '+endTime+'packageName = '+packageName);
+			console.log("Apple process ");
+			//console.log(receiptdata);
+			var data = 
+			{
+				'receipt-data' : receiptdata,
+				'password'     : apple_password
+			}
+			var request_body = JSON.stringify(data);
+			request(
+				{
+					uri: apple_varify_server,
+					method: 'POST',
+					body: request_body,
+					headers:
+					{
+						'content-type': 'application/x-www-form-urlencoded'
+						//'content-length': postData.length
+					}
+				},
+				function(err, res, body)
+				{
+					//console.log(body);
+					ret = {
+						status : '',
+						data : ''
+					};
+					if(!err)
+					{
+						try
+						{
+							body = JSON.parse(body);
+							//console.log(body);
+							//console.log("productId = "+productId);
+							for( var j in body["latest_receipt_info"] )
+							{
+								
+								if(productId == body["latest_receipt_info"][j]["product_id"])
+								{
+									var apple_expire_time = new Date(JSON.parse(body["latest_receipt_info"][j]["expires_date_ms"]));
+									endTime = new Date(endTime);
+									if( endTime<=apple_expire_time )
+									{
+										startTime = endTime;
+										endTime = JSON.parse(body["latest_receipt_info"][j]["expires_date_ms"]);
+										//console.log("Owen_debug endTime = "+new Date(endTime));
+									}
+								}
+							}
+							console.log("Owen_debug before insertDB!");
+							var renewData ={
+								user_name : user_name,
+								device_ID : device_ID,
+								product_ID : productId,
+								start_Date : startTime,
+								end_Date : new Date(endTime),
+								store : store_flag,
+								receipt_data : receiptdata,
+								package_name : packageName
+							};
+							//console.log(JSON.stringify(renewData));
+							
+							couchbase.insertPurchasedData(renewData, 
+								function(err, data)
+								{
+									if(err)
+									{
+										console.log("updating DB error!");
+										ret = 
+										{
+											status: statusCode['fail'],
+										}
+										res.statusCode = 500;
+									}
+									else
+									{
+										console.log("updating DB success!");
+										ret = 
+										{
+											status: statusCode['pass'],
+										}
+										res.statusCode = 200;
+										nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
+									}
+								});
+						} catch(ex){
+							console.log(ex);
+						}
+					} else{
+						console.log("apple request \n\n err ="+err);
+						ret.status = statusCode[1];
+						ret.data = err;
+					}
+				}
+			);
+		}
+		else
+		{
+			console.log("invalid DBdata!");
+			nextFCT(G_pkgName, G_data, G_count -- , G_res, renew_recursive);
+		}
+		
+	}
+	//nextFCT(pkgName, data, count - 1 , res, renew_recursive);
+}
+
 var renew_all_purchased_product = function(body, res)
 {
 	console.log('renew_all_purchased_product start!');
@@ -298,7 +514,7 @@ var renew_all_purchased_product = function(body, res)
 	var couchBaseDataObj;
 
 	var ret;
-
+	
 	couchbase.getData(user_name+'_Purchased_Product',
 		function(err, data)
 		{
@@ -311,25 +527,11 @@ var renew_all_purchased_product = function(body, res)
 			{
 				couchBaseDataObj = JSON.parse(data);				
 				console.log(couchBaseDataObj);
-				var updateLimiter = limiter(renew_purchased_product).to(1).per(100);
-				
-				for(var i in couchBaseDataObj['product']['product_list'])
-				{
-					//console.log("Owen_debug renew loop i = "+i+" package_name = "+packageName);
-					//console.log("couchBaseDataObj['product']['product_list'][i]['package_name'] = "+couchBaseDataObj['product']['product_list'][i]['package_name']);
-
-					if(packageName == couchBaseDataObj['product']['product_list'][i]['package_name'])
-					{
-						var param ={
-							token : token,
-							user_name : user_name,
-							device_ID : couchBaseDataObj['product']['product_list'][i]['device_ID']
-						};
-						console.log(param);
-						updateLimiter(param, res);
-						
-					}
-				}
+				G_pkgName = packageName;
+				G_data = couchBaseDataObj;
+				G_count = couchBaseDataObj["product"]["product_list"].length - 1;
+				G_res = res;
+				renew_recursive(packageName, couchBaseDataObj, G_count, res, renew_recursive);
 			}
 		});
 }
