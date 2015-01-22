@@ -239,7 +239,7 @@ router.post("/renew_purchased_product"
 
 router.post("/renew_purchased_all_product"
             ,tokenVerify    
-            ,deviceIDVerify
+            ,packageNameVerify
             ,function(req, res) {
     logger.log("info", "renew_purchased_all_product: " + JSON.stringify(req.body));
     params = parseUserName(req.body);

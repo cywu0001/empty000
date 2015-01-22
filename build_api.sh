@@ -24,6 +24,7 @@ fi
 ROOT_DIR=$(pwd)
 echo $ROOT_DIR
 sudo pm2 start ./routes/billing/BillingRefreshProduct.js -i 1
+sudo pm2 start ./routes/billing/BillingRenewService.js -i 1
 $ROOT_DIR/utils/BlackloudElsServer/elasticsearch-1.4.2/bin/elasticsearch &
 sudo pm2 start utils/BlackloudElsServer/kibana.js -i 1 
 #Zephyr: end
