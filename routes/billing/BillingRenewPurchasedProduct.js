@@ -371,7 +371,7 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 											{
 												status: statusCode['fail'],
 											}
-											res.statusCode = 500;
+											//res.statusCode = 500;
 										}
 										else
 										{
@@ -380,7 +380,7 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 											{
 												status: statusCode['pass'],
 											}
-											res.statusCode = 200;
+											//res.statusCode = 200;
 										}
 										nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
 									});
@@ -509,8 +509,11 @@ var renew_all_purchased_product = function(body, res)
 	
 	var token = body.token;
 	var user_name = body.user_name;
-	packageName = body.package_name;
-	console.log("renew_all_purchased_product packageName = "+packageName);
+	if(body.package_name)
+	{
+		packageName = body.package_name;
+	}
+	console.log("renew_all_purchased_product packageName = "+packageName+" user_name = "+user_name);
 	var couchBaseDataObj;
 
 	var ret;

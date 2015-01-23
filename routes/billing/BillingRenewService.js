@@ -8,59 +8,29 @@ var packageName = env.PACKAGE_NAME;
 
 var UPDATE_INTERVAL = 1000 * 60 * 60 * 24; // 24hr -> ms
 var RenewProduct = require('./BillingRenewPurchasedProduct');
+var callback_count;
 
-var renew_all_purchased_product_in_service = function(user_name)
+var renewall_callback = function(count, nameOBJ, nextFCT)
 {
-	console.log('renew_all_purchased_product start! service~');
-	
-	//var user_name = body.user_name;
-	console.log("renew_all_purchased_product packageName = "+packageName);
-	var couchBaseDataObj;
-
-	var ret;
-
-	if( user_name == '' )
+	//console.log("renewall_callback count = ",count);
+	if(count<0)
 	{
-		ret = 
-		{
-			status: statusCode['missing'],
-		}
-		res.statusCode = 400;
-		res.send(ret);
+		console.log("renewall_callback done!");
 		return;
 	}
-
-	couchBase.getData(user_name/*+"_Purchased_Product"*/,
-		function(err, data)
-		{
-			if(err)
-			{
-				console.log("couchbase.getData() have some error!");
-				return;
-			}
-			if(data)
-			{
-				couchBaseDataObj = JSON.parse(data);
-				
-				var updateLimiter = limiter(RenewProduct.renew).to(1).per(100);
-				
-				for(var i in couchBaseDataObj['product']['product_list'])
-				{
-						var param ={
-							token : token,
-							user_name : user_name,
-							device_ID : couchBaseDataObj['product']['product_list'][i]['device_ID']
-						};
-						//console.log(param);
-						updateLimiter(param, res);
-				}
-			}
-		});
+	else
+	{
+		console.log("count = "+count+" nameOBJ = "+nameOBJ['rows'][count]['id'].substring( 0,nameOBJ['rows'][count]['id'].indexOf("_Purchased_Product")));
+		
+		var res;
+		RenewProduct.renewall(body = { user_name : nameOBJ['rows'][count]['id'].substring( 0,nameOBJ['rows'][count]['id'].indexOf("_Purchased_Product")) }, res);
+	}
+	nextFCT(callback_count--, nameOBJ, renewall_callback);
 }
 
 var RenewService = function()
 {
-	
+	console.log('Renew product service start!');
 	couchBase.getUser_NAME(function(err, DBbaseInfo)
 		{
 			if(err)
@@ -70,16 +40,15 @@ var RenewService = function()
 			}
 			if(DBbaseInfo)
 			{
-				var updateLimiter = limiter(renew_all_purchased_product_in_service).to(1).per(100);
-				for(var i in DBbaseInfo['rows'])
-				{
-					//console.log(DBbaseInfo['rows'][i]['id']);
-					updateLimiter( DBbaseInfo['rows'][i]['id'] );
-				}
+				//console.log(" DBbaseInfo['rows'].length = "+ DBbaseInfo['rows'].length);
+				callback_count= DBbaseInfo['rows'].length-1;
+				renewall_callback(callback_count, DBbaseInfo, renewall_callback);
+			}
+			else
+			{
+				console.log("couchBase.getUser_NAME have some error");
 			}
 		});
-	
-	console.log('Renew product service start!');
 }
 
 RenewService();
