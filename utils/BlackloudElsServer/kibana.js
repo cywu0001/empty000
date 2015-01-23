@@ -2,8 +2,7 @@ var express      = require('express'),
 	auth         = require('http-auth'),
 	http         = require('http'),
 	app          = express(),
-	server       = http.createServer(app);
-	userAccounts = require('./userAccount'),
+	server       = http.createServer(app),
 	port         = 10101;
 
 var basicauth = auth.basic({
