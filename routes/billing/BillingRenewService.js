@@ -30,7 +30,7 @@ var renew_all_purchased_product_in_service = function(user_name)
 		return;
 	}
 
-	couchbase.getData(user_name/*+"_Purchased_Product"*/,
+	couchBase.getData(user_name/*+"_Purchased_Product"*/,
 		function(err, data)
 		{
 			if(err)
