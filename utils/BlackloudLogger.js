@@ -1,6 +1,5 @@
 var	winston = require('winston'),
 	winston_es = require('winston-elasticsearch');
-var winstonNsSocket = require('winston-nssocket').Nssocket;
 
 var fs = require("fs"),
 	dotEnv = require("dotenv"),
