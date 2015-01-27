@@ -11,13 +11,14 @@ var logger = new BlackloudLogger(env.PROJECT_NAME, "Couchbase");
 var bucketfd = env.BUCKETFD;
 var couchbaseserver = env.COUCHBASE_SERVER;
 var c_couchbase = env.C_COUCHBASE;
+var c_couchbase_pw = env.C_COUCHBASE_PW;
 var success = 0;
 
 function loadData(key ,result) {
  
  // Get the data in Couchbase using the get method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.get(key,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to load data\n");
@@ -36,7 +37,7 @@ function saveData(key,w_data ,result) {
  console.log("saveData....\n");
  // save the data in Couchbase using the insert method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.insert(key, JSON.stringify(w_data), function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS 
         console.log("Failed to save data\n");
@@ -314,7 +315,7 @@ exports.insertData = function insertData(key,w_data ,result) {
  console.log("insertData....\n");
  // Insert the data in Couchbase using the add method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.insert(key, JSON.stringify(w_data), function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS 
         console.log("Failed to insert data\n");
@@ -375,7 +376,7 @@ exports.replaceData = function replaceData(key,w_data ,result) {
  console.log("replaceData....\n");
  // Insert the data in Couchbase using the add method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
 	myBucket.replace(key, w_data, function(err,data){
 		if (err && err != 12) { // 12 : LCB_KEY_EEXISTS
 			console.log("Failed to replace data\n");
@@ -422,7 +423,7 @@ exports.getData = function getData(key ,result) {
  
  // Get the data in Couchbase using the get method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.get(key,function(err,data) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to get data\n");
@@ -440,7 +441,7 @@ exports.deleteData = function deleteData(key ,result) {
  
  // delete the data in Couchbase using the remove method ()
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.remove(key,function(err) {
    if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  
      console.log("Failed to remove data\n");
@@ -456,7 +457,7 @@ exports.deleteData = function deleteData(key ,result) {
 exports.flushBucket = function flushBucket(result) {
  
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd,'123456'); 
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw); 
    console.log("start to flush data\n");
    var myBucketManager = myBucket.manager();
    if(myBucketManager)
@@ -474,7 +475,7 @@ exports.getBucket = function getBucket() {
 exports.disconnect = function disconnect() {
    console.log("Buckets disconnect\n");
    var cb = new couchbase.Cluster(couchbaseserver);
-   var myBucket = cb.openBucket(bucketfd);
+   var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
    myBucket.disconnect();
 }
 
