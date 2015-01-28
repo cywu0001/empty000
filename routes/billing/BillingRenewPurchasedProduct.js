@@ -143,7 +143,7 @@ var renew_purchased_product = function(body, res)
 							else
 							{
 								//console.log("Google process 1-2 data['autoRenewing'] = "+data['autoRenewing']);
-								if(!data['autoRenewing'])
+								if(data['autoRenewing'])
 								{
 									console.log("Google process");
 									startTime = new Date(startTime);
@@ -176,14 +176,26 @@ var renew_purchased_product = function(body, res)
 											}
 											else
 											{
-												console.log("updating DB success!");
+												console.log("updating DB success!!!");
 												ret = 
 												{
 													status: statusCode['pass'],
 												}
 												res.statusCode = 200;
 											}
+											res.send(ret);
+											return;
 										});
+								}
+								else
+								{
+									ret = 
+									{
+										status: statusCode['pass'],
+									}
+									res.statusCode = 200;
+									res.send(ret);
+									return;
 								}
 							}
 						}
@@ -273,6 +285,8 @@ var renew_purchased_product = function(body, res)
 												}
 												res.statusCode = 200;
 											}
+											res.send(ret);
+											return;
 										});
 								} catch(ex){
 									console.log(ex);
@@ -341,7 +355,7 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 					else
 					{
 						//console.log("Google process 1-2 data['autoRenewing'] = "+data['autoRenewing']);
-						if(!data['autoRenewing'])
+						if(data['autoRenewing'])
 						{
 							console.log("Google process");
 							startTime = new Date(startTime);
@@ -371,19 +385,38 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 											{
 												status: statusCode['fail'],
 											}
-											//res.statusCode = 500;
+											G_res.statusCode = 500;
+											G_res.send(ret);
+											return;
 										}
 										else
 										{
 											console.log("updating DB success!");
 											ret = 
 											{
-												status: statusCode['pass'],
+												status: statusCode['all_pass'],
 											}
-											//res.statusCode = 200;
+											G_res.statusCode = 200;
+											if(G_count == 0)
+											{
+												G_res.send(ret);
+											}
 										}
 										nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
 									});
+						}
+						else
+						{
+							ret = 
+							{
+								status: statusCode['all_pass'],
+							}
+							G_res.statusCode = 200;
+							if(G_count == 0)
+							{
+								G_res.send(ret);
+							}
+							nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
 						}
 					}
 				}
@@ -470,15 +503,21 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 											status: statusCode['fail'],
 										}
 										res.statusCode = 500;
+										G_res.send(ret);
+										return;
 									}
 									else
 									{
 										console.log("updating DB success!");
 										ret = 
 										{
-											status: statusCode['pass'],
+											status: statusCode['all_pass'],
 										}
 										res.statusCode = 200;
+										if(G_count == 0)
+										{
+											G_res.send(ret);
+										}
 										nextFCT(G_pkgName, G_data, G_count-- , G_res, renew_recursive);
 									}
 								});
