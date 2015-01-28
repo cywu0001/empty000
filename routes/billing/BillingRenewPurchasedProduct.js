@@ -535,6 +535,15 @@ var renew_recursive = function(pkgName, data, count, res, nextFCT)
 		else
 		{
 			console.log("invalid DBdata!");
+			ret = 
+			{
+				status: statusCode['all_pass'],
+			}
+			res.statusCode = 200;
+			if(G_count == 0)
+			{
+				G_res.send(ret);
+			}
 			nextFCT(G_pkgName, G_data, G_count -- , G_res, renew_recursive);
 		}
 		
