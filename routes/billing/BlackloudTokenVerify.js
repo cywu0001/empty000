@@ -7,28 +7,45 @@ var env = dotEnv.parse(file);
 var BlackloudLogger = require("../../utils/BlackloudLogger");
 var logger = new BlackloudLogger(env.PROJECT_NAME, "blackloudTokenVerify");
 
-exports.verify = function(token, pass, fail) {
-    var current_time = Math.floor(new time.Date());
-    var params = {
-        token: token,
-        api_key: "ICE-F2aOPC64Ke",
-        api_token: "CiMrSnX4rvuujJjhqLNy",
-        time: current_time
-    }; 
+var billing_test = env.BILLING_TEST
+var billing_test_name = env.BILLING_TEST_NAME
 
-    request({
-        method: "POST",
-        headers: {"content-type" : "application/json"},
-        url:     "https://s5.securepilot.com/v1/token_verify",
-        json:    true,
-        body:    params
-    }, function(error, response, body) {
-       logger.log("info", "statusCode = " + response.statusCode);
-       logger.log("info", "body = " + JSON.stringify(body));
-       if (!error && response.statusCode == 200)
-           pass();
-       else
-           fail();
-    });
+exports.verify = function(token, pass, fail) {
+    if(billing_test == 'true')
+    {
+		console.log("Test token:"+token);
+		var index = token.indexOf(":");
+		var userName = token.substring(0,index);
+		if(userName.match(billing_test_name))
+			pass();
+		else
+			fail();
+    }else
+	{
+		var current_time = Math.floor(new time.Date());
+		var params = {
+		    token: token,
+		    api_key: "ICE-F2aOPC64Ke",
+		    api_token: "CiMrSnX4rvuujJjhqLNy",
+		    time: current_time
+		}; 
+
+		request({
+		    method: "POST",
+		    headers: {"content-type" : "application/json"},
+		    url:     "https://s5.securepilot.com/v1/token_verify",
+		    json:    true,
+		    body:    params
+		}, function(error, response, body) {
+		   if (!error && response.statusCode == 200)
+		   {
+			   logger.log("info", "statusCode = " + response.statusCode);
+			   logger.log("info", "body = " + JSON.stringify(body));
+		       pass();
+		   }
+		   else
+		       fail();
+		});
+	}
 }
 
