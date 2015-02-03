@@ -61,7 +61,7 @@ var status = {
 //couchbase.setView(); 
 //couchbase.getZIP(result);
 //couchbase.flushBucket(result);
-couchbase.getData('1000',result);
+couchbase.getData('00606',result);
 /*
 couchbase.getBucket().get('10001_current',function(err,data) {
 if (err && err != 12) { // 12 : LCB_KEY_EEXISTS  

@@ -6,7 +6,6 @@ var https = require("https");
 var multer  = require("multer");
 
 var weatherServer = require("./routes/weather/WeatherHttpServer");
-var billingServer = require("./routes/billing/BillingHttpServer");
 
 var app = express();
 
@@ -34,7 +33,6 @@ onFileUploadComplete: function (file) {
 }}));
 
 app.use("/v1", weatherServer);
-app.use("/v1/billing", billingServer);
 
 // catch 400 and forward to error handler
 app.use(function(req, res, next) {

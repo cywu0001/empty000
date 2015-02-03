@@ -16,15 +16,12 @@
     "baseview": "~0.0.3",
     "merge": "~1.2.0",
     "time": "~0.11.0",
-    "aws-sdk": "~2.1.0",
     "async-waterfall": "~0.1.5",
     "request": "~2.51.0",
     "hashmap": "~1.2.0",
     "simple-rate-limiter": "~0.2.3",
     "dotenv": "~0.4.0",
     "q": "~1.1.2",
-	"googleapis": "~1.0.21",
-    "in-app-purchase": "~0.2.1",
     "http-auth": "~2.2.5",
     "multer": "~0.1.6"
   }
