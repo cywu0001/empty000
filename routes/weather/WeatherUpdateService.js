@@ -91,7 +91,7 @@ var updateInformation = function(initialize){
 			updateByMap();
 			if(initialize) {
 				setTimeout(function(){
-					updateByMap();
+					updateInformation(false);
 					setInterval(function(){
 						updateInformation(false);
 					}, parseInt(env.UPDATE_INTERVAL));
