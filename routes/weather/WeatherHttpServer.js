@@ -149,7 +149,7 @@ router.get("/server_version", function(req, res) {
 });
 
 /* GET forecast. */
-router.get("/forecastweather", clientAuthentication, parameterCheck, demoFunction, function(req, res) {
+router.get("/forecastweather", clientAuthentication, parameterCheck, function(req, res) {
     getInfoFromDB(res, req.query.zipcode, "forecast")
         .then(null, getInfoFromWeb);
 });
