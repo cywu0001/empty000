@@ -124,7 +124,7 @@ function readUploadFile(req,res,type)
 {
 	var obj;
 	res.end("File uploaded.");
-	fs.readFile('./uploads/temp', 'utf8', function (err, data) {
+	fs.readFile(env.UPLOAD_PATH, 'utf8', function (err, data) {
 	if (err) throw err;
 	console.log("zip code:\n"+req.query.zipcode);
 	//console.log("get file:\n"+data);
