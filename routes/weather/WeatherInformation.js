@@ -73,19 +73,23 @@ function weatherReq(zipCode, retry, callback) {
 			}
 		}
 		else {
-			if(body.search(apiKeyErrorWWO) > 0) {
-				callback(apiKeyError, "done");
-			}
-			else if(body.search(exceededPerSecErrorWWO) >= 0){
-				if(logEnable)
-					logger.log("info", exceededPerSecErrorWWO);
-				weatherReq(zipCode, retry, callback);
-			}
-			else if(body.search(exceededPerDayErrorWWO) >= 0){
-				callback(exceededPerDayError, "done");
+			console.log("get weather infornatiom fail....");
+			if(body != undefined)
+			{
+				if(body.search(apiKeyErrorWWO) > 0) {
+					callback(apiKeyError, "done");
+				}
+				else if(body.search(exceededPerSecErrorWWO) >= 0){
+					if(logEnable)
+						logger.log("info", exceededPerSecErrorWWO);
+					weatherReq(zipCode, retry, callback);
+				}	
+				else if(body.search(exceededPerDayErrorWWO) >= 0){
+					callback(exceededPerDayError, "done");
+				}
 			}
 			//Try again after 1 second
-			else if(retry >= 1) {
+			if(retry >= 1) {
 				if(logEnable)
 					logger.log("info", "Access server fail and try again");
 				setTimeout(function(){
@@ -95,9 +99,14 @@ function weatherReq(zipCode, retry, callback) {
 			else {
 				//Use backup service or not
 				//callback("goto backup", "done");
-				callback(error, "done");
-			}   
+				console.log("goto backup....done");
+				callback("goto backup", "done");
+				//callback(error,"done");
+			}
 		}
+	}).on("error",function(error){
+		console.log("request error=" + error);
+		callback("goto backup", "done");
 	});
 }
 
@@ -241,6 +250,7 @@ exports.get = function(zipCode, result) {
 	], function (err, res) {
 		// Result now equals 'done'
 		if(err == "goto backup") {
+			console.log("goto backup....");
 			exports.getBackup(zipCode, result);		
 		} else {
 			result(err);
@@ -287,13 +297,15 @@ function weatherBackupReq(zipCode, feature, callback) {
 				logger.log("error", "request error: " + url);
 			callback(serverError, "done");
 		}
-	});    
+	}).on("error",function(error){
+                console.log("request backup error=" + error);
+        });    
 }
 
 exports.getBackup = function(zipCode, result) {
 	var currentObj;
 	var forecastObj;
-
+	console.log("Into getBackup()....");
 	waterfall([
 		//First, get weather current information form provider
 		function(callback){
