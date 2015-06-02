@@ -23,7 +23,7 @@ var response_data = {
 };
 
 exports.insertData = function insertData(key,w_data ,result) {
- console.log("insertData....\n");
+ console.log("insertData...."+key);
  // Insert the data in Couchbase using the add method ()
    var cb = new couchbase.Cluster(couchbaseserver);
    var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);
@@ -53,7 +53,7 @@ exports.insertData = function insertData(key,w_data ,result) {
 }
 
 exports.replaceData = function replaceData(key,w_data ,result) {
- console.log("insertData....\n");
+ console.log("insertData...."+key);
  // Insert the data in Couchbase using the add method ()
    var cb = new couchbase.Cluster(couchbaseserver);
    var myBucket = cb.openBucket(bucketfd,c_couchbase_pw);

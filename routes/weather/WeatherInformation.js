@@ -208,16 +208,65 @@ exports.get = function(zipCode, result) {
 				};
 
 				var forecastJson = JSON.parse(JSON.stringify(forecastObj));
-				couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
-					if(err == 0) {
-						if(logEnable)
-							logger.log("info", "Insert forecast JSON completed");
-						callback(null);
-					}
-					else {
-						callback(databaseError, "done");
-					}
-				});
+				//Add by Will for Ca:900XX~961XX
+				if((env.GOVERN_DEACTIVATE_WATERING=="true") && (parseFloat(zipCode) >= parseFloat("90000")) && (parseFloat(zipCode) <= parseFloat("96199")))
+				{
+					couchbase.getData(zipCode+"_forecast", function(err, data) {
+						console.log("info++", JSON.stringify(forecastJson));
+						if(err){
+			        		console.log("info", "Can not get Ca zip code from DB");							
+							if(forecastJson["data"]["weather"][0]["suggestWatering"]=="0")
+							{
+								forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+								forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+								forecastJson["data"]["weather"][2]["suggestWatering"]="2";
+							}								
+						}
+						else
+						{
+		        			console.log("info", "Get Ca zip code");
+				    		DB = JSON.parse(data);
+							if(forecastJson["data"]["weather"][0]["suggestWatering"]=="0")
+							{
+								forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+								forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+								forecastJson["data"]["weather"][2]["suggestWatering"]="2";
+							}else
+							{
+								if(DB["data"]["weather"][1]["suggestWatering"]=="2")
+									forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+								if(DB["data"]["weather"][2]["suggestWatering"]=="2")
+									forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+							}
+						}
+						couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
+							if(err == 0) {
+								if(logEnable)
+								{
+									logger.log("info", "Insert Ca_forecast JSON completed");
+									console.log("info---", JSON.stringify(forecastJson));
+								}
+								callback(null);
+							}
+							else {
+								callback(databaseError, "done");
+							}
+						});
+        			});
+				//~
+				}else
+				{				
+					couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
+						if(err == 0) {
+							if(logEnable)
+								logger.log("info", "Insert forecast JSON completed");
+							callback(null);
+						}
+						else {
+							callback(databaseError, "done");
+						}
+					});
+				}
 			} catch(err) {
 				callback(parseError + " in forcast", "done");
 			}
