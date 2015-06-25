@@ -233,10 +233,36 @@ exports.get = function(zipCode, result) {
 								forecastJson["data"]["weather"][2]["suggestWatering"]="2";
 							}else
 							{
-								if(DB["data"]["weather"][1]["suggestWatering"]=="2")
-									forecastJson["data"]["weather"][0]["suggestWatering"]="2";
-								if(DB["data"]["weather"][2]["suggestWatering"]=="2")
-									forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+								if(forecastJson["data"]["weather"][0]["date"] == DB["data"]["weather"][0]["date"])
+                            					{
+		                        				console.log("info","get weather info at same day");
+									if(forecastJson["data"]["weather"][0]["suggestWatering"]=="0")
+						        		{
+						                		forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+						                		forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+						                		forecastJson["data"]["weather"][2]["suggestWatering"]="2";
+						        		}else
+						        		{	 
+		                         					forecastJson["data"]["weather"][0]["suggestWatering"]=DB["data"]["weather"][0]["suggestWatering"];
+		                         					forecastJson["data"]["weather"][1]["suggestWatering"]=DB["data"]["weather"][1]["suggestWatering"];
+		                         					forecastJson["data"]["weather"][2]["suggestWatering"]=DB["data"]["weather"][2]["suggestWatering"];
+									}				
+                            					}else
+                            					{	
+									console.log("info","get weather info at another day");
+							 		if(forecastJson["data"]["weather"][0]["suggestWatering"]=="0")
+					            			{
+					                    			forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+					                    			forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+					                    			forecastJson["data"]["weather"][2]["suggestWatering"]="2";
+					            			}else
+					            			{	                                    
+	                                    					if(DB["data"]["weather"][1]["suggestWatering"]=="2")
+	                                            					forecastJson["data"]["weather"][0]["suggestWatering"]="2";
+	                                    					if(DB["data"]["weather"][2]["suggestWatering"]=="2")
+	                                            					forecastJson["data"]["weather"][1]["suggestWatering"]="2";
+									}
+                            					}
 							}
 						}
 						couchbase.insertData(zipCode+"_forecast", forecastJson, function(err) {
