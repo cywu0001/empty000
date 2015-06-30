@@ -199,6 +199,28 @@ exports.get = function(zipCode, result) {
 							forecastArray.push(obj);
 						});
 					break;
+					case '/premium/v1':
+						weatherInfo["data"]["weather"].forEach(function (val, idx) {
+							var hourly_latest = val["hourly"].pop();					
+							var obj = {
+								date: val["date"],
+								precipMM: hourly_latest.precipMM,
+								tempMaxC: val["maxtempC"],
+								tempMaxF: val["maxtempF"],
+								tempMinC: val["mintempC"],
+								tempMinF: val["mintempF"],
+								weatherCode: hourly_latest.weatherCode,
+								weatherDesc: hourly_latest.weatherDesc[0]["value"],
+								winddir16Point: hourly_latest.winddir16Point,
+								winddirDegree: hourly_latest.winddirDegree,
+								winddirection: hourly_latest.winddir16Point,
+								windspeedKmph: hourly_latest.windspeedKmph,
+								windspeedMiles: hourly_latest.windspeedMiles,
+								suggestWatering: (parseFloat(hourly_latest.precipMM) > 0) ? "0":"1"
+							}
+							forecastArray.push(obj);
+						});
+					break;
 				}
 				
 				forecastObj = {
